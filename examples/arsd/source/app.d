@@ -3,7 +3,7 @@ module examples.arsd;
 import std.datetime : Clock;
 
 import arsd.simpledisplay;
-import arsd.nanovega;
+import nanogui.nanovega;
 import nanogui.arsdbackend : ArsdBackend;
 
 class MyGui : ArsdBackend

@@ -15,7 +15,7 @@ import gfm.opengl: OpenGL;
 import gfm.sdl2: SDL2, SDL2Window, SDL_Event, SDL_Cursor, SDL_SetCursor, 
 	SDL_FreeCursor, SDL_Delay;
 
-import arsd.nanovega : nvgCreateContext, kill, NVGContextFlag;
+import nanogui.nanovega : nvgCreateContext, kill, NVGContextFlag;
 import nanogui.screen : Screen;
 import nanogui.theme : Theme;
 import nanogui.common : NanoContext, Vector2i, MouseButton, MouseAction, Cursor;
@@ -50,7 +50,7 @@ class SdlBackend : Screen
 		_sdl2.subSystemInit(SDL_INIT_EVENTS);
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
