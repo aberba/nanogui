@@ -733,7 +733,8 @@ struct RelativeMeasurer
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
 		static if (order == Order.Bubbling)
-			output ~= TreePosition(tree_path.value, position);
+			if (state != state.finishing)
+				output ~= TreePosition(tree_path.value, position);
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)

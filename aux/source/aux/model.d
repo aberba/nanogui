@@ -928,11 +928,9 @@ mixin template visitImpl()
 							path = tree_path;
 						}
 					}
-					visitor.leaveNode!order(data, this);
 				}
 			}
-			else
-				visitor.leaveNode!order(data, this);
+			visitor.leaveNode!order(data, this);
 		}
 
 		dbgPrint!(hasSize, hasTreePath)(" ", Data.stringof);
