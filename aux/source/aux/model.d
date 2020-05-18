@@ -628,7 +628,7 @@ struct NullableModel(alias A)
 
 	alias nullable_model this;
 
-	@property auto size()
+	@property auto size() const
 	{
 		return (isNull) ? nulled_model.size : nullable_model.size;
 	}
@@ -851,7 +851,6 @@ mixin template visitImpl()
 		static if (Data.sizeof > 24 && !__traits(isRef, data))
 			pragma(msg, "Warning: ", Data, " is a value type and has size larger than 24 bytes");
 
-		// static assert(Data.sizeof <= 24 || __traits(isRef, data));
 		import std.algorithm : among;
 
 		enum Sinking     = order == Order.Sinking;

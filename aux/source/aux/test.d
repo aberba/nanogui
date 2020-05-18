@@ -953,7 +953,7 @@ version(unittest)
 				v.destination.should.be == 41;
 				v.path.value[].should.be == [3];
 
-				// bubble to the next element
+				// bubble to the previous element
 				v.destination = 19;
 
 				model.visitBackward(data, v);
