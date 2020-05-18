@@ -43,17 +43,17 @@ bool isPointInRect(Vector2i topleft, Vector2i size, Vector2i point)
 		point.y >= topleft.y && point.y < topleft.y+size.y;
 }
 
-auto drawItem(T)(ref NanoContext ctx, float height, T item)
+auto drawItem(T)(ref NanoContext ctx, T item)
 {
 	import std.traits : isSomeString;
 
 	static if (isSomeString!T)
-		return drawString(ctx, height, item);
+		return drawString(ctx, item);
 	else
-		return drawPodType(ctx, height, item);
+		return drawPodType(ctx, item);
 }
 
-private auto drawString(Char)(ref NanoContext ctx, float height, const(Char)[] str)
+private auto drawString(Char)(ref NanoContext ctx, const(Char)[] str)
 {
 	import nanogui.common : textAlign, text, roundedRect, fill, beginPath, linearGradient, fillPaint, fillColor;
 
@@ -76,7 +76,7 @@ private auto drawString(Char)(ref NanoContext ctx, float height, const(Char)[] s
 
 		const bg = ctx.linearGradient(
 			ctx.position.x, ctx.position.y, 
-			ctx.position.x, ctx.position.y + height,
+			ctx.position.x, ctx.position.y + ctx.size.y,
 			gradTop, gradBot
 		);
 
@@ -87,12 +87,12 @@ private auto drawString(Char)(ref NanoContext ctx, float height, const(Char)[] s
 	}
 	ctx.textAlign(ctx.algn);
 	ctx.text(ctx.position.x, ctx.position.y, str);
-	ctx.position.y += height;
+	ctx.position.y += ctx.size.y;
 
 	return inside;
 }
 
-private auto drawPodType(T)(ref NanoContext ctx, float height, T item)
+private auto drawPodType(T)(ref NanoContext ctx, T item)
 {
 	import std.format : sformat;
 	import std.traits : isIntegral, isFloatingPoint, isBoolean, isSomeString,
@@ -123,7 +123,7 @@ private auto drawPodType(T)(ref NanoContext ctx, float height, T item)
 
 	buffer[l < $ ? l : $-1] = '\0';
 
-	return ctx.drawString(height, buffer[0..l]);
+	return ctx.drawString(buffer[0..l]);
 }
 
 mixin template DependencyProperty(T, alias string name)
