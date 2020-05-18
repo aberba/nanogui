@@ -876,7 +876,6 @@ mixin template visitImpl()
 			return true;
 		}
 
-		static if (hasSize) size = header_size = visitor.size + Spacing;
 
 		static if (hasTreePath) with(visitor)
 		{
@@ -886,9 +885,22 @@ mixin template visitImpl()
 				{
 					visitor.position += visitor.deferred_change;
 				}
+			}
+		}
 
+		static if (hasSize) size = header_size = visitor.size + Spacing;
+		static if (hasTreePath)
+		{
+			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				visitor.enterNode!(order, Data)(data, this);
+		}
+		else
+			visitor.enterNode!(order, Data)(data, this);
 
+		static if (hasTreePath) with(visitor)
+		{
+			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+			{
 				static if (Sinking)
 				{
 					visitor.deferred_change = this.header_size;
@@ -900,8 +912,6 @@ mixin template visitImpl()
 				}
 			}
 		}
-		else
-			visitor.enterNode!(order, Data)(data, this);
 
 		scope(exit)
 		{
