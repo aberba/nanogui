@@ -885,11 +885,13 @@ mixin template visitImpl()
 				static if (Sinking)
 				{
 					visitor.position += visitor.deferred_change;
-					visitor.deferred_change = this.header_size;
 				}
+
 				visitor.enterNode!(order, Data)(data, this);
+
 				static if (Sinking)
 				{
+					visitor.deferred_change = this.header_size;
 					if (position+deferred_change > destination)
 					{
 						state = State.finishing;
@@ -903,23 +905,28 @@ mixin template visitImpl()
 
 		scope(exit)
 		{
-			static if (hasTreePath) with(visitor)
+			static if (hasTreePath && Bubbling) with(visitor)
 			{
 				if (state.among(State.first, State.rest))
 				{
-					static if (Bubbling)
+					position += deferred_change;
+				}
+			}
+
+			visitor.leaveNode!order(data, this);
+
+			static if (hasTreePath && Bubbling) with(visitor)
+			{
+				if (state.among(State.first, State.rest))
+				{
+					deferred_change = -this.header_size;
+					if (position <= destination)
 					{
-						position += deferred_change;
-						deferred_change = -this.header_size;
-						if (position <= destination)
-						{
-							state = State.finishing;
-							path = tree_path;
-						}
+						state = State.finishing;
+						path = tree_path;
 					}
 				}
 			}
-			visitor.leaveNode!order(data, this);
 		}
 
 		if (!this.collapsed)
