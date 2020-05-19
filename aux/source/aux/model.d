@@ -207,6 +207,8 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
+		if (collapsed)
+			return 0;
 		return sum(model[].map!"a.size", 0.0);
 	}
 
@@ -255,6 +257,8 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
+		if (collapsed)
+			return 0;
 		return sum(model[].map!"a.size", 0.0);
 	}
 
@@ -295,6 +299,8 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
+		if (collapsed)
+			return 0;
 		return sum(model.map!"a.size", 0);
 	}
 
@@ -496,6 +502,9 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 
 			auto childrenSize() const @safe
 			{
+				if (collapsed)
+					return 0;
+
 				double total = 0;
 				static foreach(member; DrawableMembers!Data)
 					mixin("total += %1$s.size;".format(member));
