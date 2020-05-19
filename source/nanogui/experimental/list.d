@@ -399,7 +399,7 @@ private struct RenderingVisitor
 	import aux.model;
 
 	NanoContext ctx;
-	DefaultVisitorImpl!(SizeEnabled.no, TreePathEnabled.yes) default_visitor;
+	DefaultVisitorImpl!(TreePathEnabled.yes) default_visitor;
 	alias default_visitor this;
 
 	TreePath selected_item;
@@ -533,7 +533,7 @@ struct RelativeMeasurer
 {
 	import aux.model;
 
-	alias DefVisitor = DefaultVisitorImpl!(SizeEnabled.no, TreePathEnabled.yes);
+	alias DefVisitor = DefaultVisitorImpl!(TreePathEnabled.yes);
 	DefVisitor default_visitor;
 	alias default_visitor this;
 }

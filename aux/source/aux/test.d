@@ -5,7 +5,7 @@ version(unittest) import unit_threaded : Name;
 import aux.model;
 
 @safe private
-struct MeasureVisitor
+struct PrettyPrintingVisitor
 {
 	import std.experimental.allocator.mallocator : Mallocator;
 	import automem.vector : Vector;
@@ -18,58 +18,11 @@ struct MeasureVisitor
 	import aux.model : Orientation;
 	Orientation orientation;
 
-	this(float width, float height)
+	this(float width, float height) @nogc
 	{
 		size[0] = width;
 		size[1] = height;
 		orientation = Orientation.Vertical;
-	}
-
-	void indent() @nogc
-	{
-
-	}
-
-	void unindent() @nogc
-	{
-
-	}
-
-	void enterTree(Order order, Data, Model)(auto ref const(Data) data, ref Model model)
-	{
-		position = 0;
-	}
-
-	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-	{
-		model.size = model.header_size = size[orientation] + model.Spacing;
-	}
-
-	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-	{
-		model.size += model.childrenSize;
-	}
-
-	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
-	{
-		model.size = size[orientation] + model.Spacing;
-	}
-}
-
-@safe private
-struct PrettyPrintingVisitor
-{
-	import std.experimental.allocator.mallocator : Mallocator;
-	import automem.vector : Vector;
-
-	Vector!(char, Mallocator) output;
-	private Vector!(char, Mallocator) _indentation;
-	DefaultVisitor default_visitor;
-	alias default_visitor this;
-
-	this(float size) @nogc
-	{
-		default_visitor = DefaultVisitor(size);
 	}
 
 	auto processItem(T...)(T msg)
@@ -99,6 +52,8 @@ struct PrettyPrintingVisitor
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
+		model.size = model.header_size = size[orientation] + model.Spacing;
+
 		import std.conv : to;
 		import aux.traits : hasRenderHeader;
 
@@ -113,8 +68,15 @@ struct PrettyPrintingVisitor
 			processItem("Caption: ", Data.stringof);
 	}
 
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size += model.childrenSize;
+	}
+
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
+		model.size = size[orientation] + model.Spacing;
+
 		processItem(data);
 	}
 }
@@ -153,7 +115,7 @@ unittest
 		TestClass tc;
 	}
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	auto d = StructWithStruct();
 	auto m = makeModel(d);
 	m.visitForward(d, visitor);
@@ -182,7 +144,7 @@ unittest
 	float[3] d = [1.1f, 2.2f, 3.3f];
 	auto m = Model!d();
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	visitor.processItem;
 	m.collapsed = false;
 	m.visitForward(d, visitor);
@@ -210,7 +172,7 @@ unittest
 	float[] d = [1.1f, 2.2f, 3.3f];
 	auto m = Model!d();
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	visitor.processItem;
 	m.collapsed = false;
 	m.model.length = d.length;
@@ -263,7 +225,7 @@ version(unittest) @Name("aggregate_with_only_member")
 	import std.meta : AliasSeq;
 	static assert(FieldNameTuple!(typeof(m)) == AliasSeq!("single_member_model"));
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	visitor.processItem;
 	m.visitForward(d, visitor);
 
@@ -310,7 +272,7 @@ unittest
 	auto m = Model!d();
 	m.collapsed = false;
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	visitor.processItem;
 	m.visitForward(d, visitor);
 
@@ -389,7 +351,7 @@ unittest
 		import std.meta : AliasSeq;
 		static assert(FieldNameTuple!(typeof(m)) == AliasSeq!("single_member_model"));
 
-		auto visitor = PrettyPrintingVisitor(9);
+		auto visitor = PrettyPrintingVisitor(120, 9);
 		visitor.processItem;
 		m.visitForward(d, visitor);
 
@@ -414,7 +376,7 @@ unittest
 		auto m = makeModel(d);
 		static assert(!m.Collapsable);
 
-		auto visitor = PrettyPrintingVisitor(9);
+		auto visitor = PrettyPrintingVisitor(120, 9);
 		visitor.processItem;
 		m.visitForward(d, visitor);
 
@@ -449,7 +411,7 @@ nan
 		auto m = makeModel(d);
 		static assert(!m.Collapsable);
 
-		auto visitor = PrettyPrintingVisitor(9);
+		auto visitor = PrettyPrintingVisitor(120, 9);
 		visitor.processItem;
 		m.visitForward(d, visitor);
 
@@ -482,7 +444,7 @@ nan
 		auto m = makeModel(d);
 		static assert(!m.Collapsable);
 
-		auto visitor = PrettyPrintingVisitor(9);
+		auto visitor = PrettyPrintingVisitor(120, 9);
 		visitor.processItem;
 		m.visitForward(d, visitor);
 
@@ -568,7 +530,7 @@ unittest
 	foreach(ref e; model.model)
 		e.collapsed = false;
 
-	auto visitor = PrettyPrintingVisitor(9);
+	auto visitor = PrettyPrintingVisitor(120, 9);
 	visitor.processItem;
 	model.visitForward(data, visitor);
 
@@ -651,17 +613,17 @@ unittest
 
 	auto model = makeModel(data[]);
 
-	auto visitor = PrettyPrintingVisitor(14);
+	auto visitor = PrettyPrintingVisitor(120, 14);
 	visitor.processItem;
 	model.visitForward(data[], visitor);
-	assert(model.size == visitor.size + model.Spacing);
+	assert(model.size == visitor.size[visitor.orientation] + model.Spacing);
 
 	model.collapsed = false;
 	model.visitForward(data[], visitor);
 
-	assert(model.size == 4*(visitor.size + model.Spacing));
+	assert(model.size == 4*(visitor.size[visitor.orientation] + model.Spacing));
 	foreach(e; model.model)
-		assert(e.size == (visitor.size + model.Spacing));
+		assert(e.size == (visitor.size[visitor.orientation] + model.Spacing));
 
 	visitor.output ~= '\0';
 	version(none)
@@ -720,7 +682,7 @@ unittest
 	assert(model[4].get!(Model!(string[])).length == data[4].length);
 
 	model.size.should.be == 0;
-	auto visitor = MeasureVisitor(120, 17);
+	auto visitor = PrettyPrintingVisitor(120, 17);
 	model.visitForward(data, visitor);
 
 	model.collapsed.should.be == true;
@@ -775,7 +737,7 @@ unittest
 
 struct RelativeMeasurer
 {
-	DefaultVisitorImpl!(SizeEnabled.no, TreePathEnabled.yes) default_visitor;
+	DefaultVisitorImpl!(TreePathEnabled.yes) default_visitor;
 	alias default_visitor this;
 
 	TreePosition[] output;
@@ -1344,7 +1306,7 @@ unittest
 	auto d = StructNullable();
 	auto m = makeModel(d);
 	m.collapsed = false;
-	auto visitor = DefaultVisitor(19);
+	auto visitor = DefaultVisitor();
 	m.visitForward(d, visitor);
 	import std;
 	writeln(m);

@@ -826,7 +826,6 @@ struct ScalarModel(alias A)
 		enum Sinking     = order == Order.Sinking;
 		enum Bubbling    = !Sinking; 
 		enum hasTreePath = Visitor.treePathEnabled;
-		enum hasSize     = Visitor.sizeEnabled;
 
 		static if (hasTreePath)
 		{
@@ -853,7 +852,6 @@ struct ScalarModel(alias A)
 			return true;
 		}
 
-		static if (hasSize) this.size = visitor.size + this.Spacing;
 		static if (hasTreePath) with(visitor) 
 		{
 			position += deferred_change;
@@ -916,7 +914,6 @@ mixin template visitImpl()
 		enum Sinking     = order == Order.Sinking;
 		enum Bubbling    = !Sinking; 
 		enum hasTreePath = Visitor.treePathEnabled;
-		enum hasSize     = Visitor.sizeEnabled;
 
 		static if (hasTreePath)
 		{
@@ -952,7 +949,6 @@ mixin template visitImpl()
 			}
 		}
 
-		static if (hasSize) size = header_size = visitor.size + Spacing;
 		static if (hasTreePath)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
@@ -1050,7 +1046,6 @@ mixin template visitImpl()
 				foreach(i; TwoFacedRange!order(start_value, data.length))
 				{
 					static if (hasTreePath) visitor.tree_path.back = i;
-					static if (hasSize) scope(exit) this.size += model[i].size;
 					auto idx = getIndex!(Data)(this, i);
 					if (model[i].visit!order(data[idx], visitor))
 					{
@@ -1070,7 +1065,6 @@ mixin template visitImpl()
 							enum FieldNo = (Sinking) ? i : len - i - 1;
 							enum member = DrawableMembers!Data[FieldNo];
 							static if (hasTreePath) visitor.tree_path.back = cast(int) FieldNo;
-							static if (hasSize) scope(exit) this.size += mixin("this." ~ member).size;
 							if (mixin("this." ~ member).visit!order(mixin("data." ~ member), visitor))
 							{
 								return true;
@@ -1355,35 +1349,23 @@ import std.typecons : Flag;
 alias SizeEnabled     = Flag!"SizeEnabled";
 alias TreePathEnabled = Flag!"TreePathEnabled";
 
-alias NullVisitor      = DefaultVisitorImpl!(SizeEnabled.no,  TreePathEnabled.no );
-alias TreePathVisitor  = DefaultVisitorImpl!(SizeEnabled.no,  TreePathEnabled.yes);
-alias DefaultVisitor   = DefaultVisitorImpl!(SizeEnabled.yes, TreePathEnabled.yes);
+alias NullVisitor      = DefaultVisitorImpl!(TreePathEnabled.no );
+alias TreePathVisitor  = DefaultVisitorImpl!(TreePathEnabled.yes);
+alias DefaultVisitor   = DefaultVisitorImpl!(TreePathEnabled.yes);
 
 /// Default implementation of Visitor
 struct DefaultVisitorImpl(
-	SizeEnabled _size_,
 	TreePathEnabled _tree_path_,
 )
 {
-	alias sizeEnabled     = _size_;
 	alias treePathEnabled = _tree_path_;
-
-	alias SizeType = double;
-	static if (sizeEnabled == SizeEnabled.yes)
-	{
-		SizeType size;
-
-		this(SizeType s) @safe @nogc nothrow
-		{
-			size = s;
-		}
-	}
 
 	static if (treePathEnabled == TreePathEnabled.yes)
 	{
 		enum State { seeking, first, rest, finishing, }
 		State state;
 		TreePath tree_path, path;
+		alias SizeType = double;
 		SizeType position, deferred_change, destination;
 	}
 
