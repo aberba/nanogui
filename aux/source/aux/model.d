@@ -1400,7 +1400,7 @@ struct MeasureVisitor
 	import aux.model : Orientation;
 	Orientation orientation;
 
-	this(float width, float height)
+	this(float width, float height) @nogc
 	{
 		size[0] = width;
 		size[1] = height;

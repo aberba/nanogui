@@ -14,15 +14,13 @@ struct PrettyPrintingVisitor
 	private Vector!(char, Mallocator) _indentation;
 	TreePathVisitor tree_path_visitor;
 	alias tree_path_visitor this;
-	float[2] size;
-	import aux.model : Orientation;
-	Orientation orientation;
+
+	MeasureVisitor measure_visitor;
 
 	this(float width, float height) @nogc
 	{
-		size[0] = width;
-		size[1] = height;
-		orientation = Orientation.Vertical;
+		measure_visitor = MeasureVisitor(width, height);
+		measure_visitor.orientation = Orientation.Vertical;
 	}
 
 	auto processItem(T...)(T msg)
@@ -52,7 +50,7 @@ struct PrettyPrintingVisitor
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size = model.header_size = size[orientation] + model.Spacing;
+		measure_visitor.enterNode!order(data, model);
 
 		import std.conv : to;
 		import aux.traits : hasRenderHeader;
@@ -70,14 +68,19 @@ struct PrettyPrintingVisitor
 
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size += model.childrenSize;
+		measure_visitor.leaveNode!order(data, model);
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size = size[orientation] + model.Spacing;
+		measure_visitor.processLeaf!order(data, model);
 
 		processItem(data);
+	}
+
+	auto currentSize()
+	{
+		return measure_visitor.size[measure_visitor.orientation];
 	}
 }
 
@@ -616,14 +619,14 @@ unittest
 	auto visitor = PrettyPrintingVisitor(120, 14);
 	visitor.processItem;
 	model.visitForward(data[], visitor);
-	assert(model.size == visitor.size[visitor.orientation] + model.Spacing);
+	assert(model.size == visitor.currentSize + model.Spacing);
 
 	model.collapsed = false;
 	model.visitForward(data[], visitor);
 
-	assert(model.size == 4*(visitor.size[visitor.orientation] + model.Spacing));
+	assert(model.size == 4*(visitor.currentSize + model.Spacing));
 	foreach(e; model.model)
-		assert(e.size == (visitor.size[visitor.orientation] + model.Spacing));
+		assert(e.size == (visitor.currentSize + model.Spacing));
 
 	visitor.output ~= '\0';
 	version(none)
@@ -686,31 +689,31 @@ unittest
 	model.visitForward(data, visitor);
 
 	model.collapsed.should.be == true;
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing);
+	model.size.should.be ~ (visitor.currentSize + model.Spacing);
 	model.size.should.be ~ 18.0;
 	visitor.position.should.be ~ 0.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*7;
+	model.size.should.be ~ (visitor.currentSize + model.Spacing)*7;
 	model.size.should.be ~ 18.0*7;
 	visitor.position.should.be ~ 6*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [3], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*9;
+	model.size.should.be ~ (visitor.currentSize + model.Spacing)*9;
 	model.size.should.be ~ 18.0*9;
 	visitor.position.should.be ~ (6+2)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [4], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*12;
+	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
 	visitor.position.should.be ~ (6+2+3)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [5], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*15;
+	model.size.should.be ~ (visitor.currentSize + model.Spacing)*15;
 	model.size.should.be ~ 18.0*15;
 	visitor.position.should.be ~ (6+2+3+3)*18.0;
 
@@ -730,7 +733,7 @@ unittest
 	// clear visitor to calculate the size of the whole model
 	visitor.clear;
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*12;
+	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
 	visitor.position.should.be ~ (6+2+3)*18.0;
 }
