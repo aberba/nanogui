@@ -762,6 +762,15 @@ unittest
 	model.visitForward(data, visitor);
 	model.size.should.be == 270;
 	visitor.position.should.be == 90;
+
+	// check for recalculating the model size after node collapsing
+	setPropertyByTreePath!"collapsed"(data, model, [5], true);
+	// clear visitor to calculate the size of the whole model
+	visitor.clear;
+	model.visitForward(data, visitor);
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*12;
+	model.size.should.be ~ 18.0*12;
+	visitor.position.should.be ~ (6+2+3)*18.0;
 }
 
 struct RelativeMeasurer
@@ -862,7 +871,7 @@ version(unittest)
 
 			// measure size
 			{
-				auto mv = MeasuringVisitor(9);
+				auto mv = MeasuringVisitor(120, 9);
 				model.visitForward(data, mv);
 			}
 		}
@@ -1162,7 +1171,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasuringVisitor(9);
+		auto mv = MeasuringVisitor(120, 9);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;
@@ -1236,7 +1245,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasuringVisitor(9);
+		auto mv = MeasuringVisitor(120, 9);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;

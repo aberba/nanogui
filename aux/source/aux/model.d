@@ -1356,7 +1356,6 @@ alias SizeEnabled     = Flag!"SizeEnabled";
 alias TreePathEnabled = Flag!"TreePathEnabled";
 
 alias NullVisitor      = DefaultVisitorImpl!(SizeEnabled.no,  TreePathEnabled.no );
-alias MeasuringVisitor = DefaultVisitorImpl!(SizeEnabled.yes, TreePathEnabled.no );
 alias TreePathVisitor  = DefaultVisitorImpl!(SizeEnabled.no,  TreePathEnabled.yes);
 alias DefaultVisitor   = DefaultVisitorImpl!(SizeEnabled.yes, TreePathEnabled.yes);
 
@@ -1388,6 +1387,18 @@ struct DefaultVisitorImpl(
 		SizeType position, deferred_change, destination;
 	}
 
+	void clear()
+	{
+		static if (treePathEnabled == TreePathEnabled.yes)
+		{
+			state = State.seeking;
+			tree_path.clear;
+			path.clear;
+			position = deferred_change = 0;
+			destination = destination.nan;
+		}
+	}
+
 	void indent() {}
 	void unindent() {}
 	bool complete() @safe @nogc { return false; }
@@ -1395,6 +1406,39 @@ struct DefaultVisitorImpl(
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model) {}
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model) {}
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model) {}
+}
+
+@safe
+struct MeasuringVisitor
+{
+	NullVisitor null_visitor;
+	alias null_visitor this;
+
+	float[2] size;
+	import aux.model : Orientation;
+	Orientation orientation;
+
+	this(float width, float height)
+	{
+		size[0] = width;
+		size[1] = height;
+		orientation = Orientation.Vertical;
+	}
+
+	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size = model.header_size = size[orientation] + model.Spacing;
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size += model.childrenSize;
+	}
+
+	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size = size[orientation] + model.Spacing;
+	}
 }
 
 version(unittest) @Name("MeasuringVisitor")
@@ -1405,7 +1449,7 @@ unittest
 
 	auto data = [0, 1, 2, 3];
 	auto model = makeModel(data);
-	auto visitor = MeasuringVisitor(9);
+	auto visitor = MeasuringVisitor(120, 9);
 
 	model.collapsed = false;
 	model.visitForward(data, visitor);
