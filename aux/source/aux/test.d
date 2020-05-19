@@ -833,7 +833,7 @@ version(unittest)
 
 			// measure size
 			{
-				auto mv = MeasuringVisitor(120, 9);
+				auto mv = MeasureVisitor(120, 9);
 				model.visitForward(data, mv);
 			}
 		}
@@ -1133,7 +1133,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasuringVisitor(120, 9);
+		auto mv = MeasureVisitor(120, 9);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;
@@ -1207,7 +1207,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasuringVisitor(120, 9);
+		auto mv = MeasureVisitor(120, 9);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;

@@ -46,8 +46,8 @@ public:
 		}
 		_data = data;
 		_model = makeModel(_data);
-		import nanogui.experimental.utils : MeasuringVisitor;
-		auto v = MeasuringVisitor(size.x, fontSize);
+		import nanogui.experimental.utils : MeasureVisitor;
+		auto v = MeasureVisitor(size.x, fontSize);
 		_model.visitForward(_data, v);
 	}
 
@@ -115,8 +115,8 @@ public:
 					if (!value.isNull)
 					{
 						setPropertyByTreePath!"collapsed"(_data, _model, tree_path.value[], !value.get);
-						import nanogui.experimental.utils : MeasuringVisitor;
-						auto mv = MeasuringVisitor(size.x, fontSize);
+						import nanogui.experimental.utils : MeasureVisitor;
+						auto mv = MeasureVisitor(size.x, fontSize);
 						_model.visitForward(_data, mv);
 						screen.needToPerfomLayout = true;
 					}
@@ -215,8 +215,8 @@ protected:
 				if (_model.collapsed == v)
 				{
 					_model.collapsed = !v;
-					import nanogui.experimental.utils : MeasuringVisitor;
-					auto mv = MeasuringVisitor(size.x, fontSize);
+					import nanogui.experimental.utils : MeasureVisitor;
+					auto mv = MeasureVisitor(size.x, fontSize);
 					_model.visitForward(_data, mv);
 					screen.needToPerfomLayout = true;
 				}

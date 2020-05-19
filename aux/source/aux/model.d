@@ -1391,7 +1391,7 @@ struct DefaultVisitorImpl(
 }
 
 @safe
-struct MeasuringVisitor
+struct MeasureVisitor
 {
 	NullVisitor null_visitor;
 	alias null_visitor this;
@@ -1431,7 +1431,7 @@ unittest
 
 	auto data = [0, 1, 2, 3];
 	auto model = makeModel(data);
-	auto visitor = MeasuringVisitor(120, 9);
+	auto visitor = MeasureVisitor(120, 9);
 
 	model.collapsed = false;
 	model.visitForward(data, visitor);
