@@ -877,14 +877,11 @@ mixin template visitImpl()
 		}
 
 
-		static if (hasTreePath) with(visitor)
+		static if (hasTreePath && Sinking) with(visitor)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				static if (Sinking)
-				{
-					visitor.position += visitor.deferred_change;
-				}
+				visitor.position += visitor.deferred_change;
 			}
 		}
 
@@ -897,18 +894,15 @@ mixin template visitImpl()
 		else
 			visitor.enterNode!(order, Data)(data, this);
 
-		static if (hasTreePath) with(visitor)
+		static if (hasTreePath && Sinking) with(visitor)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				static if (Sinking)
+				visitor.deferred_change = this.header_size;
+				if (position+deferred_change > destination)
 				{
-					visitor.deferred_change = this.header_size;
-					if (position+deferred_change > destination)
-					{
-						state = State.finishing;
-						path = tree_path;
-					}
+					state = State.finishing;
+					path = tree_path;
 				}
 			}
 		}
