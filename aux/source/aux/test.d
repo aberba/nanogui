@@ -45,7 +45,7 @@ struct PrettyPrintingVisitor
 
 	void enterTree(Order order, Data, Model)(auto ref const(Data) data, ref Model model)
 	{
-		position = 0;
+		position[] = 0;
 	}
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
@@ -691,42 +691,42 @@ unittest
 	model.collapsed.should.be == true;
 	model.size.should.be ~ (visitor.currentSize + model.Spacing);
 	model.size.should.be ~ 18.0;
-	visitor.position.should.be ~ 0.0;
+	visitor.pos.should.be ~ 0.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [], false);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*7;
 	model.size.should.be ~ 18.0*7;
-	visitor.position.should.be ~ 6*18.0;
+	visitor.pos.should.be ~ 6*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [3], false);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*9;
 	model.size.should.be ~ 18.0*9;
-	visitor.position.should.be ~ (6+2)*18.0;
+	visitor.pos.should.be ~ (6+2)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [4], false);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
-	visitor.position.should.be ~ (6+2+3)*18.0;
+	visitor.pos.should.be ~ (6+2+3)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [5], false);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*15;
 	model.size.should.be ~ 18.0*15;
-	visitor.position.should.be ~ (6+2+3+3)*18.0;
+	visitor.pos.should.be ~ (6+2+3+3)*18.0;
 
-	visitor.destination = visitor.destination.nan;
+	visitor.destination[] = visitor.destination[0].nan;
 	model.visitForward(data, visitor);
 	model.size.should.be == 270;
-	visitor.position.should.be == 252;
+	visitor.pos.should.be == 252;
 
 	visitor.position = 0;
 	visitor.destination = 100;
 	model.visitForward(data, visitor);
 	model.size.should.be == 270;
-	visitor.position.should.be == 90;
+	visitor.pos.should.be == 90;
 
 	// check for recalculating the model size after node collapsing
 	setPropertyByTreePath!"collapsed"(data, model, [5], true);
@@ -735,7 +735,7 @@ unittest
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
-	visitor.position.should.be ~ (6+2+3)*18.0;
+	visitor.pos.should.be ~ (6+2+3)*18.0;
 }
 
 struct RelativeMeasurer
@@ -774,7 +774,7 @@ struct TreePosition
 	import std.experimental.allocator.mallocator : Mallocator;
 	import automem : Vector;
 	Vector!(int, Mallocator) path;
-	double size;
+	double[2] size;
 
 	@disable this();
 
@@ -782,12 +782,14 @@ struct TreePosition
 		if (!is(P == void[]))
 	{
 		path = p;
-		size = s;
+		size[0] = s[0];
+		size[1] = s[1];
 	}
 
 	this(S)(void[] p, S s)
 	{
-		size = s;
+		size[0] = s[0];
+		size[1] = s[1];
 	}
 
 	import std.range : isOutputRange;
@@ -882,37 +884,37 @@ version(unittest)
 			model.visitForward(data, v);
 			model.size.should.be == 180;
 			v.output.should.be == [
-				TreePosition([ ],         0),
-				TreePosition([0],        10),
-				TreePosition([1],        20),
-				TreePosition([2],        30),
-				TreePosition([3],        40),
-				TreePosition([3, 0],     50),
-				TreePosition([3, 1],     60),
-				TreePosition([4],        70),
-				TreePosition([4, 0],     80),
-				TreePosition([4, 1],     90),
-				TreePosition([4, 2],    100),
-				TreePosition([4, 2, 0], 110),
-				TreePosition([4, 2, 1], 120),
-				TreePosition([4, 3],    130),
-				TreePosition([4, 3, 0], 140),
-				TreePosition([4, 3, 1], 150),
-				TreePosition([4, 3, 2], 160),
-				TreePosition([5],       170),
+				TreePosition([ ],       [0,   0]),
+				TreePosition([0],       [0,  10]),
+				TreePosition([1],       [0,  20]),
+				TreePosition([2],       [0,  30]),
+				TreePosition([3],       [0,  40]),
+				TreePosition([3, 0],    [0,  50]),
+				TreePosition([3, 1],    [0,  60]),
+				TreePosition([4],       [0,  70]),
+				TreePosition([4, 0],    [0,  80]),
+				TreePosition([4, 1],    [0,  90]),
+				TreePosition([4, 2],    [0, 100]),
+				TreePosition([4, 2, 0], [0, 110]),
+				TreePosition([4, 2, 1], [0, 120]),
+				TreePosition([4, 3],    [0, 130]),
+				TreePosition([4, 3, 0], [0, 140]),
+				TreePosition([4, 3, 1], [0, 150]),
+				TreePosition([4, 3, 2], [0, 160]),
+				TreePosition([5],       [0, 170]),
 			];
-			v.position.should.be == 170;
+			v.pos.should.be == 170;
 
 			v.position = 0;
 			v.path.value = [4,2,1];
 			model.visitForward(data, v);
 			v.output.should.be == [
-				TreePosition([4, 2, 1],  0),
-				TreePosition([4, 3],    10),
-				TreePosition([4, 3, 0], 20),
-				TreePosition([4, 3, 1], 30),
-				TreePosition([4, 3, 2], 40),
-				TreePosition([5],       50)
+				TreePosition([4, 2, 1], [0,  0]),
+				TreePosition([4, 3],    [0, 10]),
+				TreePosition([4, 3, 0], [0, 20]),
+				TreePosition([4, 3, 1], [0, 30]),
+				TreePosition([4, 3, 2], [0, 40]),
+				TreePosition([5],       [0, 50])
 			];
 		}
 	}
@@ -924,11 +926,11 @@ version(unittest)
 			// default
 			{
 				v.path.clear;
-				v.position = 0;
-				v.destination = v.destination.nan;
+				v.pos = 0;
+				v.destination[] = v.destination[0].nan;
 				model.visitForward(data, v);
 
-				v.position.should.be == 170;
+				v.pos.should.be == 170;
 				v.path.value[].should.be == [];
 			}
 
@@ -939,8 +941,8 @@ version(unittest)
 				v.destination = 15;
 				model.visitForward(data, v);
 
-				v.position.should.be == 10;
-				v.destination.should.be == 15;
+				v.pos.should.be == 10;
+				v.dest.should.be == 15;
 				v.path.value[].should.be == [0];
 			}
 
@@ -951,8 +953,8 @@ version(unittest)
 				v.destination = 30;
 				model.visitForward(data, v);
 
-				v.position.should.be == 30;
-				v.destination.should.be == 30;
+				v.pos.should.be == 30;
+				v.dest.should.be == 30;
 				v.path.value[].should.be == [2];
 			}
 
@@ -963,21 +965,21 @@ version(unittest)
 				v.destination = 55;
 				model.visitForward(data, v);
 
-				v.position.should.be == 50;
-				v.destination.should.be == 55;
+				v.pos.should.be == 50;
+				v.dest.should.be == 55;
 				v.path.value[].should.be == [4, 2];
 			}
 
 			// reverse order, start path is not null
 			{
 				v.path.value = [4, 1];
-				v.position = 90;
+				v.position = [0, 90];
 				v.destination = 41;
 
 				model.visitBackward(data, v);
 
-				v.position.should.be == 40;
-				v.destination.should.be == 41;
+				v.pos.should.be == 40;
+				v.dest.should.be == 41;
 				v.path.value[].should.be == [3];
 
 				// bubble to the previous element
@@ -986,13 +988,13 @@ version(unittest)
 				model.visitBackward(data, v);
 
 				v.path.value[].should.be == [0];
-				v.position.should.be == 10;
-				v.destination.should.be == 19;
+				v.pos.should.be == 10;
+				v.dest.should.be == 19;
 				v.output.should.be == [
-					TreePosition([3], 40),
-					TreePosition([2], 30),
-					TreePosition([1], 20),
-					TreePosition([0], 10),
+					TreePosition([3], [0, 40]),
+					TreePosition([2], [0, 30]),
+					TreePosition([1], [0, 20]),
+					TreePosition([0], [0, 10]),
 				];
 			}
 		}
@@ -1012,115 +1014,115 @@ version(unittest)
 			// current element is the root one
 			v.path.value[].should.be == [];
 			// position of the current element is 0 px
-			v.position.should.be == 0;
+			v.pos.should.be == 0;
 			// the window starts from 7th px
-			v.destination.should.be == 7;
+			v.dest.should.be == 7;
 
 			// scroll the next 7th px forward
 			visit(model, data, v, 14);
 			// the current element is the first child element
 			v.path.value[].should.be == [0];
 			// position of the current element is 10 px
-			v.position.should.be == 10;
+			v.pos.should.be == 10;
 			// the window starts from 14th px
-			v.destination.should.be == 14;
+			v.dest.should.be == 14;
 
 			// scroll the next 7th px forward
 			visit(model, data, v, 21);
 			// the current element is the second child element
 			v.path.value[].should.be == [1];
 			// position of the current element is 20 px
-			v.position.should.be == 20;
+			v.pos.should.be == 20;
 			// the window starts from 21th px
-			v.destination.should.be == 21;
+			v.dest.should.be == 21;
 
 			// scroll the next 7th px forward
 			visit(model, data, v, 28);
 			// the current element is the second child element
 			v.path.value[].should.be == [1];
 			// position of the current element is 20 px
-			v.position.should.be == 20;
+			v.pos.should.be == 20;
 			// the window starts from 28th px
-			v.destination.should.be == 28;
+			v.dest.should.be == 28;
 
 			// scroll the next 7th px forward
 			visit(model, data, v, 35);
 			// the current element is the third child element
 			v.path.value[].should.be == [2];
 			// position of the current element is 30 px
-			v.position.should.be == 30;
+			v.pos.should.be == 30;
 			// the window starts from 35th px
-			v.destination.should.be == 35;
+			v.dest.should.be == 35;
 
 			// scroll 7th px backward
 			visit(model, data, v, 27);
 			// the current element is the second child element
 			v.path.value[].should.be == [1];
 			// position of the current element is 20 px
-			v.position.should.be == 20;
+			v.pos.should.be == 20;
 			// the window starts from 27th px
-			v.destination.should.be == 27;
+			v.dest.should.be == 27;
 
 			// scroll the next 9th px backward
 			visit(model, data, v, 18);
 			// the current element is the first child element
 			v.path.value[].should.be == [0];
 			// position of the current element is 10 px
-			v.position.should.be == 10;
+			v.pos.should.be == 10;
 			// the window starts from 18th px
-			v.destination.should.be == 18;
+			v.dest.should.be == 18;
 
 			// scroll the next 6th px backward
 			visit(model, data, v, 12);
 			// the current element is the first child element
 			v.path.value[].should.be == [0];
 			// position of the current element is 10 px
-			v.position.should.be == 10;
+			v.pos.should.be == 10;
 			// the window starts from 12th px
-			v.destination.should.be == 12;
+			v.dest.should.be == 12;
 
 			// scroll the next 5th px backward
 			visit(model, data, v, 7);
 			// the current element is the root element
 			v.path.value[].should.be == [];
 			// position of the current element is 0 px
-			v.position.should.be == 0;
+			v.pos.should.be == 0;
 			// the window starts from 7th px
-			v.destination.should.be == 7;
+			v.dest.should.be == 7;
 
 			// scroll 76 px forward
 			visit(model, data, v, 83);
 			// // the current element is the second child element
 			// v.path.value[].should.be == [4, 0];
 			// // position of the current element is 20 px
-			// v.position.should.be == 80;
+			// v.pos.should.be == 80;
 			// the window starts from 27th px
-			v.destination.should.be == 83;
+			v.dest.should.be == 83;
 
 			visit(model, data, v, 81);
 			v.path.value[].should.be == [4, 0];
-			v.position.should.be == 80;
-			v.destination.should.be == 81;
+			v.pos.should.be == 80;
+			v.dest.should.be == 81;
 
 			visit(model, data, v, 80);
 			v.path.value[].should.be == [4, 0];
-			v.position.should.be == 80;
-			v.destination.should.be == 80;
+			v.pos.should.be == 80;
+			v.dest.should.be == 80;
 
 			visit(model, data, v, 79.1);
 			v.path.value[].should.be == [4];
-			v.position.should.be == 70;
-			v.destination.should.be ~ 79.1;
+			v.pos.should.be == 70;
+			v.dest.should.be ~ 79.1;
 
 			visit(model, data, v, 133.4);
 			v.path.value[].should.be == [4, 3];
-			v.position.should.be == 130;
-			v.destination.should.be ~ 133.4;
+			v.pos.should.be == 130;
+			v.dest.should.be ~ 133.4;
 
 			visit(model, data, v, 0);
 			v.path.value[].should.be == [];
-			v.position.should.be == 0;
-			v.destination.should.be ~ 0.0;
+			v.pos.should.be == 0;
+			v.dest.should.be ~ 0.0;
 		}
 	}
 }
@@ -1142,38 +1144,38 @@ unittest
 	visitor.position = 0;
 	model.visitForward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([ ],  0),
-		TreePosition([0], 10),
-		TreePosition([1], 20),
-		TreePosition([2], 30),
-		TreePosition([3], 40),
+		TreePosition([ ], [0,  0]),
+		TreePosition([0], [0, 10]),
+		TreePosition([1], [0, 20]),
+		TreePosition([2], [0, 30]),
+		TreePosition([3], [0, 40]),
 	];
 
-	visitor.position.should.be == 40;
+	visitor.pos.should.be == 40;
 
 	model.visitBackward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([3], 40),
-		TreePosition([2], 30),
-		TreePosition([1], 20),
-		TreePosition([0], 10),
-		TreePosition([ ],  0),
+		TreePosition([3], [0, 40]),
+		TreePosition([2], [0, 30]),
+		TreePosition([1], [0, 20]),
+		TreePosition([0], [0, 10]),
+		TreePosition([ ], [0,  0]),
 	];
 
 	visitor.path.value = [1,];
-	visitor.position = 20;
+	visitor.pos = 20;
 	model.visitForward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([1], 20),
-		TreePosition([2], 30),
-		TreePosition([3], 40),
+		TreePosition([1], [0, 20]),
+		TreePosition([2], [0, 30]),
+		TreePosition([3], [0, 40]),
 	];
-	visitor.position = 20;
+	visitor.pos = 20;
 	model.visitBackward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([1], 20),
-		TreePosition([0], 10),
-		TreePosition([ ],  0),
+		TreePosition([1], [0, 20]),
+		TreePosition([0], [0, 10]),
+		TreePosition([ ], [0,  0]),
 	];
 }
 
@@ -1216,77 +1218,77 @@ unittest
 	visitor.position = 0;
 	model.visitForward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([], 0),
-		TreePosition([0], 10),
-		TreePosition([1], 20),
-		TreePosition([2], 30),
-		TreePosition([3], 40),
-		TreePosition([4], 50),
+		TreePosition([ ], [0,  0]),
+		TreePosition([0], [0, 10]),
+		TreePosition([1], [0, 20]),
+		TreePosition([2], [0, 30]),
+		TreePosition([3], [0, 40]),
+		TreePosition([4], [0, 50]),
 	];
-	visitor.position.should.be == 50;
+	visitor.pos.should.be == 50;
 
 	{
 		visitor.path.clear;
-		visitor.position = 0;
-		visitor.destination = 30;
+		visitor.pos = 0;
+		visitor.dest = 30;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
-			TreePosition([], 0),
-			TreePosition([0], 10),
-			TreePosition([1], 20),
-			TreePosition([2], 30),
+			TreePosition([ ], [0,  0]),
+			TreePosition([0], [0, 10]),
+			TreePosition([1], [0, 20]),
+			TreePosition([2], [0, 30]),
 		];
-		visitor.position.should.be == 30;
+		visitor.pos.should.be == 30;
 	}
 
 	{
 		visitor.path.clear;
-		visitor.position = 30;
-		visitor.destination = visitor.position + 30;
+		visitor.pos = 30;
+		visitor.dest = visitor.pos + 30;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
-			TreePosition([], 30),
-			TreePosition([0], 40),
-			TreePosition([1], 50),
-			TreePosition([2], 60),
+			TreePosition([ ], [0, 30]),
+			TreePosition([0], [0, 40]),
+			TreePosition([1], [0, 50]),
+			TreePosition([2], [0, 60]),
 		];
-		visitor.position.should.be == 60;
+		visitor.pos.should.be == 60;
 	}
 
 	{
 		visitor.path.value = [0];
-		visitor.position = 130;
-		visitor.destination = visitor.position + 20;
+		visitor.pos = 130;
+		visitor.dest = visitor.pos + 20;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
-			TreePosition([0], 130),
-			TreePosition([1], 140),
-			TreePosition([2], 150),
+			TreePosition([0], [0, 130]),
+			TreePosition([1], [0, 140]),
+			TreePosition([2], [0, 150]),
 		];
-		visitor.position.should.be == 150;
+		visitor.pos.should.be == 150;
 	}
 
 	visitor.path.value = [2];
-	visitor.position = 30;
-	visitor.destination = visitor.destination.nan;
+	visitor.pos = 30;
+	visitor.dest = visitor.dest.nan;
 	model.visitForward(data, visitor);
 
 	visitor.output.should.be == [
-		TreePosition([2], 30),
-		TreePosition([3], 40),
-		TreePosition([4], 50),
+		TreePosition([2], [0, 30]),
+		TreePosition([3], [0, 40]),
+		TreePosition([4], [0, 50]),
 	];
 
 	visitor.path.clear;
-	visitor.destination = visitor.destination.nan;
+	visitor.dest = visitor.dest.nan;
 	model.visitBackward(data, visitor);
 	visitor.output.should.be == [
-		TreePosition([4], 50),
-		TreePosition([3], 40),
-		TreePosition([2], 30),
-		TreePosition([1], 20),
-		TreePosition([0], 10),
-		TreePosition([],   0),
+		TreePosition([4], [0, 50]),
+		TreePosition([3], [0, 40]),
+		TreePosition([2], [0, 30]),
+		TreePosition([1], [0, 20]),
+		TreePosition([0], [0, 10]),
+		TreePosition([],  [0,  0]),
 	];
 }
 

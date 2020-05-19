@@ -854,7 +854,7 @@ struct ScalarModel(alias A)
 
 		static if (hasTreePath) with(visitor) 
 		{
-			position += deferred_change;
+			pos = pos + deferred_change[orientation];
 
 			if (state.among(State.first, State.rest))
 			{
@@ -863,8 +863,8 @@ struct ScalarModel(alias A)
 					visitor.processLeaf!order(data, this);
 					deferred_change = (Sinking) ? this.size : -this.size;
 				}
-				if ((Sinking  && position+deferred_change > destination) ||
-					(Bubbling && position                 < destination))
+				if ((Sinking  && pos+deferred_change[orientation] > dest) ||
+					(Bubbling && pos                              < dest))
 				{
 					state = State.finishing;
 					path = tree_path;
@@ -945,7 +945,7 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				visitor.position += visitor.deferred_change;
+				visitor.pos = visitor.pos + visitor.deferred_change[visitor.orientation];
 			}
 		}
 
@@ -962,7 +962,7 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				visitor.deferred_change = this.header_size;
-				if (position+deferred_change > destination)
+				if (pos+deferred_change[orientation] > dest)
 				{
 					state = State.finishing;
 					path = tree_path;
@@ -976,7 +976,7 @@ mixin template visitImpl()
 			{
 				if (state.among(State.first, State.rest))
 				{
-					position += deferred_change;
+					pos = pos + deferred_change[orientation];
 				}
 			}
 
@@ -986,8 +986,8 @@ mixin template visitImpl()
 			{
 				if (state.among(State.first, State.rest))
 				{
-					deferred_change = -this.header_size;
-					if (position <= destination)
+					deferred_change[orientation] = -this.header_size;
+					if (pos <= dest)
 					{
 						state = State.finishing;
 						path = tree_path;
@@ -1253,9 +1253,9 @@ unittest
 void visit(Model, Data, Visitor)(ref Model model, auto ref Data data, ref Visitor visitor, double destination)
 {
 	visitor.destination = destination;
-	if (destination == visitor.position)
+	if (destination == visitor.pos)
 		return;
-	else if (destination < visitor.position)
+	else if (destination < visitor.pos)
 		model.visitBackward(data, visitor);
 	else
 		model.visitForward(data, visitor);
@@ -1366,7 +1366,17 @@ struct DefaultVisitorImpl(
 		State state;
 		TreePath tree_path, path;
 		alias SizeType = double;
-		SizeType position, deferred_change, destination;
+		SizeType[2] position, deferred_change, destination;
+		Orientation orientation = Orientation.Vertical;
+
+		@property
+		{
+			auto pos() const { return position[orientation]; }
+			auto pos(SizeType value) { position[orientation] = value; }
+
+			auto dest() const { return destination[orientation]; }
+			auto dest(SizeType value) { destination[orientation] = value; }
+		}
 	}
 
 	void clear()
@@ -1376,8 +1386,9 @@ struct DefaultVisitorImpl(
 			state = State.seeking;
 			tree_path.clear;
 			path.clear;
-			position = deferred_change = 0;
-			destination = destination.nan;
+			position[] = deferred_change[] = 0;
+			destination[] = destination[0].nan;
+			orientation = Orientation.Vertical;
 		}
 	}
 
