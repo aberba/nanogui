@@ -5,6 +5,58 @@ version(unittest) import unit_threaded : Name;
 import aux.model;
 
 @safe private
+struct MeasureVisitor
+{
+	import std.experimental.allocator.mallocator : Mallocator;
+	import automem.vector : Vector;
+
+	Vector!(char, Mallocator) output;
+	private Vector!(char, Mallocator) _indentation;
+	TreePathVisitor tree_path_visitor;
+	alias tree_path_visitor this;
+	float[2] size;
+	import aux.model : Orientation;
+	Orientation orientation;
+
+	this(float width, float height)
+	{
+		size[0] = width;
+		size[1] = height;
+		orientation = Orientation.Vertical;
+	}
+
+	void indent() @nogc
+	{
+
+	}
+
+	void unindent() @nogc
+	{
+
+	}
+
+	void enterTree(Order order, Data, Model)(auto ref const(Data) data, ref Model model)
+	{
+		position = 0;
+	}
+
+	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size = model.header_size = size[orientation] + model.Spacing;
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size += model.childrenSize;
+	}
+
+	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		model.size = size[orientation] + model.Spacing;
+	}
+}
+
+@safe private
 struct PrettyPrintingVisitor
 {
 	import std.experimental.allocator.mallocator : Mallocator;
@@ -668,35 +720,35 @@ unittest
 	assert(model[4].get!(Model!(string[])).length == data[4].length);
 
 	model.size.should.be == 0;
-	auto visitor = PrettyPrintingVisitor(17);
+	auto visitor = MeasureVisitor(120, 17);
 	model.visitForward(data, visitor);
 
 	model.collapsed.should.be == true;
-	model.size.should.be ~ (visitor.size + model.Spacing);
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing);
 	model.size.should.be ~ 18.0;
 	visitor.position.should.be ~ 0.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size + model.Spacing)*7;
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*7;
 	model.size.should.be ~ 18.0*7;
 	visitor.position.should.be ~ 6*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [3], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size + model.Spacing)*9;
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*9;
 	model.size.should.be ~ 18.0*9;
 	visitor.position.should.be ~ (6+2)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [4], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size + model.Spacing)*12;
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
 	visitor.position.should.be ~ (6+2+3)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [5], false);
 	model.visitForward(data, visitor);
-	model.size.should.be ~ (visitor.size + model.Spacing)*15;
+	model.size.should.be ~ (visitor.size[Orientation.Vertical] + model.Spacing)*15;
 	model.size.should.be ~ 18.0*15;
 	visitor.position.should.be ~ (6+2+3+3)*18.0;
 
@@ -708,7 +760,7 @@ unittest
 	visitor.position = 0;
 	visitor.destination = 100;
 	model.visitForward(data, visitor);
-	model.size.should.be == 126;
+	model.size.should.be == 270;
 	visitor.position.should.be == 90;
 }
 

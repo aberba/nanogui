@@ -143,6 +143,8 @@ mixin template State()
 	@property bool enabled() const { return (_placeholder & (1 << Field.Enabled)) != 0; }
 }
 
+enum Orientation { Horizontal, Vertical }
+
 template Model(alias A)
 {
 	import std.typecons : Nullable;
@@ -201,6 +203,13 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 			model[i] = Model!ElementType(data[i]);
 	}
 
+	auto childrenSize() const @safe
+	{
+		import std.algorithm : map, sum;
+
+		return sum(model[].map!"a.size", 0.0);
+	}
+
 	mixin visitImpl;
 }
 
@@ -242,6 +251,13 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 		update(taget!Data(v));
 	}
 
+	auto childrenSize() const @trusted
+	{
+		import std.algorithm : map, sum;
+
+		return sum(model[].map!"a.size", 0.0);
+	}
+
 	mixin visitImpl;
 }
 
@@ -273,6 +289,13 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 	this()(ref const(Data) data) if (Data.sizeof > (void*).sizeof)
 	{
 		update(data);
+	}
+
+	auto childrenSize() const @safe
+	{
+		import std.algorithm : map, sum;
+
+		return sum(model.map!"a.size", 0);
 	}
 
 	void update(ref const(Data) data)
@@ -356,6 +379,19 @@ struct TaggedAlgebraicModel(alias A)// if (dataHasTaggedAlgebraicModel!(TypeOf!A
 				{
 					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
 						return taget!FT(value).size;
+				}
+			}
+			assert(0);
+		}
+
+		auto childrenSize() const @safe
+		{
+			final switch(value.kind)
+			{
+				foreach (i, FT; value.UnionType.FieldTypes)
+				{
+					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
+						return taget!FT(value).childrenSize;
 				}
 			}
 			assert(0);
@@ -457,6 +493,14 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 			import aux.traits : DrawableMembers;
 			static foreach(member; DrawableMembers!Data)
 				mixin("Model!(Data.%1$s) %1$s;".format(member));
+
+			auto childrenSize() const @safe
+			{
+				double total = 0;
+				static foreach(member; DrawableMembers!Data)
+					mixin("total += %1$s.size;".format(member));
+				return total;
+			}
 
 			this()(auto ref const(Data) data)
 			{
@@ -759,6 +803,11 @@ struct ScalarModel(alias A)
 
 	this()(auto ref const(Data) data)
 	{
+	}
+
+	auto childrenSize() const @safe
+	{
+		return 0;
 	}
 
 	private bool visit(Order order, Visitor)(auto ref const(Data) data, ref Visitor visitor)
