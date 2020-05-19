@@ -799,19 +799,28 @@ struct ScalarModel(alias A)
 		static if (hasTreePath) with(visitor) 
 		{
 			position += deferred_change;
-			deferred_change = (Sinking) ? this.size : -this.size;
 
 			if (state.among(State.first, State.rest))
 			{
-				static if (Sinking) visitor.processLeaf!order(data, this);
+				static if (Sinking)
+				{
+					visitor.processLeaf!order(data, this);
+					deferred_change = (Sinking) ? this.size : -this.size;
+				}
 				if ((Sinking  && position+deferred_change > destination) ||
 					(Bubbling && position                 < destination))
 				{
 					state = State.finishing;
 					path = tree_path;
 				}
-				static if (Bubbling) visitor.processLeaf!order(data, this);
+				static if (Bubbling)
+				{
+					visitor.processLeaf!order(data, this);
+					deferred_change = (Sinking) ? this.size : -this.size;
+				}
 			}
+			else
+				deferred_change = (Sinking) ? this.size : -this.size;
 		}
 		else
 			visitor.processLeaf!order(data, this);
