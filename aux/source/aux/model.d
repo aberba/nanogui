@@ -477,7 +477,6 @@ struct TaggedAlgebraicModel(alias A)// if (dataHasTaggedAlgebraicModel!(TypeOf!A
 
 	this()(auto ref const(Data) data)
 	{
-		initialization;
 		tamodel = makeModel(data);
 	}
 
@@ -997,7 +996,6 @@ mixin template visitImpl()
 		{
 			return true;
 		}
-
 
 		static if (hasTreePath && Sinking) with(visitor)
 		{
