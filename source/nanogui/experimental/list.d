@@ -297,7 +297,7 @@ public:
 		if (_model.size > mSize.y)
 			ctx.size.x -= ScrollBarWidth;
 		ctx.position.x = 0;
-		ctx.position.y = rm.position - rm.destination;
+		ctx.position.y = rm.position[1] - rm.destination[1];
 
 		ctx.mouse -= mPos;
 		scope(exit) ctx.mouse += mPos;
@@ -306,10 +306,10 @@ public:
 		auto renderer = RenderingVisitor(ctx);
 		renderer.path = rm.path;
 		renderer.position = rm.position;
-		renderer.finish = rm.destination + size.y;
+		renderer.finish = rm.destination[1] + size.y;
 		import nanogui.layout : Orientation;
 		renderer.ctx.orientation = Orientation.Vertical;
-		visit(_model, _data, renderer, rm.destination + size.y + 50); // FIXME `+ 50` is dirty hack
+		visit(_model, _data, renderer, rm.destination[1] + size.y + 50); // FIXME `+ 50` is dirty hack
 		tree_path = renderer.selected_item;
 
 		ctx.restore;
