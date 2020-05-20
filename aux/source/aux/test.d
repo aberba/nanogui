@@ -738,6 +738,161 @@ unittest
 	visitor.pos.should.be ~ (6+2+3)*18.0;
 }
 
+private
+struct RendererVisitor
+{
+	import std.experimental.allocator.mallocator : Mallocator;
+	import automem.vector : Vector;
+
+	Vector!(char, Mallocator) output;
+	Vector!(TreePosition, Mallocator)  output_position;
+	private Vector!(char, Mallocator) _indentation;
+	TreePathVisitor tree_path_visitor;
+	alias tree_path_visitor this;
+
+	float[2] size;
+	Orientation orientation;
+
+	this(float width, float height) @nogc
+	{
+		size[0] = width;
+		size[1] = height;
+		orientation = Orientation.Vertical;
+	}
+
+	auto processItem(T...)(T msg)
+	{
+		() @trusted {
+			output ~= _indentation[];
+			char delimiter;
+			final switch(orientation)
+			{
+				case Orientation.Vertical:   delimiter = '\n'; break;
+				case Orientation.Horizontal: delimiter = '>'; break;
+			}
+			import nogc.conv : text;
+			output ~= text(msg, delimiter)[];
+		} ();
+	}
+
+	void indent() @nogc @trusted
+	{
+		final switch(orientation)
+		{
+			case Orientation.Vertical:
+				_indentation ~= '\t';
+			break;
+			case Orientation.Horizontal:
+				_indentation ~= '<';
+			break;
+		}
+	}
+
+	void unindent() @nogc @trusted
+	{
+		if (_indentation.length)
+			_indentation.popBack;
+	}
+
+	void enterTree(Order order, Data, Model)(auto ref const(Data) data, ref Model model)
+	{
+		position = 0;
+		output_position ~= TreePosition(tree_path.value, position);
+
+		final switch(orientation)
+		{
+			case Orientation.Vertical:
+			break;
+			case Orientation.Horizontal:
+				_indentation ~= '<';
+			break;
+		}
+	}
+
+	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		import std.conv : to;
+		import aux.traits : hasRenderHeader;
+
+		static if (hasRenderHeader!data)
+		{
+			import aux.model : FixedAppender;
+			FixedAppender!512 app;
+			data.renderHeader(app);
+			() @trusted { processItem(app[]); } ();
+		}
+		else
+			processItem("Caption: ", Data.stringof);
+		output_position ~= TreePosition(tree_path.value, position);
+	}
+
+	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		processItem(data);
+		output_position ~= TreePosition(tree_path.value, position);
+	}
+}
+
+version(unittest) @Name("size_measuring2")
+unittest
+{
+	static struct Foo
+	{
+		long l = -1;
+		string s = "nested str";
+	}
+
+	@("orientation.Horizontal")
+	struct Data
+	{
+		float f;
+		int i;
+		string s = "str";
+		Foo foo;
+	}
+
+	Data data;
+
+	auto model = makeModel(data);
+
+	model.size.should.be == 0;
+	setPropertyByTreePath!"collapsed"(data, model, [], false);
+	setPropertyByTreePath!"collapsed"(data, model, [3], false);
+
+	auto visitor = MeasureVisitor(120, 17);
+	model.visitForward(data, visitor);
+	visitor.size[0].should.be == 120;
+	visitor.size[1].should.be == 17;
+	model.size.should.be == 126;
+	model.f.size.should.be == 18;
+	model.i.size.should.be == 18;
+	model.s.size.should.be == 18;
+
+	auto rv = RendererVisitor(120, 17);
+	model.visitForward(data, rv);
+	rv.size[0].should.be == 120;
+	rv.size[1].should.be == 17;
+	model.size.should.be == 126;
+	model.f.size.should.be == 18;
+	model.i.size.should.be == 18;
+	model.s.size.should.be == 18;
+
+	rv = RendererVisitor(120, 17);
+	rv.orientation = Orientation.Horizontal;
+	model.visitForward(data, rv);
+
+	rv.output_position[].should.be == [
+		TreePosition([],     [0,   0]),
+		TreePosition([],     [0,   0]),
+		TreePosition([0],    [18,  0]),
+		TreePosition([1],    [36,  0]),
+		TreePosition([2],    [54,  0]),
+		TreePosition([3],    [72,  0]),
+		TreePosition([3, 0], [90,  0]),
+		TreePosition([3, 1], [108, 0]),
+	];
+}
+
 struct RelativeMeasurer
 {
 	DefaultVisitorImpl!(TreePathEnabled.yes) default_visitor;
@@ -926,7 +1081,7 @@ version(unittest)
 			// default
 			{
 				v.path.clear;
-				v.pos = 0;
+				v.position[v.orientation] = 0;
 				v.destination[] = v.destination[0].nan;
 				model.visitForward(data, v);
 
@@ -1163,14 +1318,14 @@ unittest
 	];
 
 	visitor.path.value = [1,];
-	visitor.pos = 20;
+	visitor.position[visitor.orientation] = 20;
 	model.visitForward(data, visitor);
 	visitor.output.should.be == [
 		TreePosition([1], [0, 20]),
 		TreePosition([2], [0, 30]),
 		TreePosition([3], [0, 40]),
 	];
-	visitor.pos = 20;
+	visitor.position[visitor.orientation] = 20;
 	model.visitBackward(data, visitor);
 	visitor.output.should.be == [
 		TreePosition([1], [0, 20]),
@@ -1229,7 +1384,7 @@ unittest
 
 	{
 		visitor.path.clear;
-		visitor.pos = 0;
+		visitor.position[visitor.orientation] = 0;
 		visitor.dest = 30;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
@@ -1243,7 +1398,7 @@ unittest
 
 	{
 		visitor.path.clear;
-		visitor.pos = 30;
+		visitor.position[visitor.orientation] = 30;
 		visitor.dest = visitor.pos + 30;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
@@ -1257,7 +1412,7 @@ unittest
 
 	{
 		visitor.path.value = [0];
-		visitor.pos = 130;
+		visitor.position[visitor.orientation] = 130;
 		visitor.dest = visitor.pos + 20;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
@@ -1269,7 +1424,7 @@ unittest
 	}
 
 	visitor.path.value = [2];
-	visitor.pos = 30;
+	visitor.position[visitor.orientation] = 30;
 	visitor.dest = visitor.dest.nan;
 	model.visitForward(data, visitor);
 

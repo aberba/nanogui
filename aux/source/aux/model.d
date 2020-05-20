@@ -854,14 +854,14 @@ struct ScalarModel(alias A)
 
 		static if (hasTreePath) with(visitor) 
 		{
-			pos = pos + deferred_change[orientation];
+			position[orientation] += deferred_change[orientation];
 
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
 				{
 					visitor.processLeaf!order(data, this);
-					deferred_change = (Sinking) ? this.size : -this.size;
+					deferred_change[orientation] = (Sinking) ? this.size : -this.size;
 				}
 				if ((Sinking  && pos+deferred_change[orientation] > dest) ||
 					(Bubbling && pos                              < dest))
@@ -872,11 +872,11 @@ struct ScalarModel(alias A)
 				static if (Bubbling)
 				{
 					visitor.processLeaf!order(data, this);
-					deferred_change = (Sinking) ? this.size : -this.size;
+					deferred_change[orientation] = (Sinking) ? this.size : -this.size;
 				}
 			}
 			else
-				deferred_change = (Sinking) ? this.size : -this.size;
+				deferred_change[orientation] = (Sinking) ? this.size : -this.size;
 		}
 		else
 			visitor.processLeaf!order(data, this);
@@ -945,7 +945,7 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				visitor.pos = visitor.pos + visitor.deferred_change[visitor.orientation];
+				visitor.position[visitor.orientation] += visitor.deferred_change[visitor.orientation];
 			}
 		}
 
@@ -961,7 +961,7 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				visitor.deferred_change = this.header_size;
+				visitor.deferred_change[orientation] = this.header_size;
 				if (pos+deferred_change[orientation] > dest)
 				{
 					state = State.finishing;
@@ -976,7 +976,7 @@ mixin template visitImpl()
 			{
 				if (state.among(State.first, State.rest))
 				{
-					pos = pos + deferred_change[orientation];
+					position[orientation] += deferred_change[orientation];
 				}
 			}
 
@@ -1035,7 +1035,7 @@ mixin template visitImpl()
 						start_value = visitor.path.value[idx-1];
 						// position should change only if we've got the initial path
 						// and don't get the end
-						if (visitor.state == visitor.State.seeking) visitor.deferred_change = 0;
+						if (visitor.state == visitor.State.seeking) visitor.deferred_change[visitor.orientation] = 0;
 					}
 				}
 			}
@@ -1372,7 +1372,6 @@ struct DefaultVisitorImpl(
 		@property
 		{
 			auto pos() const { return position[orientation]; }
-			auto pos(SizeType value) { position[orientation] = value; }
 
 			auto dest() const { return destination[orientation]; }
 			auto dest(SizeType value) { destination[orientation] = value; }
