@@ -836,6 +836,8 @@ struct RendererVisitor
 		static if (is(typeof(model.orientation)))
 		{
 			orientation = old_orientation;
+			if (model.orientation == Orientation.Horizontal)
+				position[Orientation.Horizontal] = 0;
 		}
 	}
 
