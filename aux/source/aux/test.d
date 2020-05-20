@@ -751,7 +751,7 @@ struct RendererVisitor
 	alias tree_path_visitor this;
 
 	float[2] size;
-	Orientation orientation;
+	Orientation orientation, old_orientation;
 
 	this(float width, float height) @nogc
 	{
@@ -797,7 +797,6 @@ struct RendererVisitor
 	void enterTree(Order order, Data, Model)(auto ref const(Data) data, ref Model model)
 	{
 		position = 0;
-		output_position ~= TreePosition(tree_path.value, position);
 
 		final switch(orientation)
 		{
@@ -814,6 +813,12 @@ struct RendererVisitor
 		import std.conv : to;
 		import aux.traits : hasRenderHeader;
 
+		static if (is(typeof(model.orientation)))
+		{
+			old_orientation = orientation;
+			orientation = model.orientation;
+		}
+
 		static if (hasRenderHeader!data)
 		{
 			import aux.model : FixedAppender;
@@ -824,6 +829,14 @@ struct RendererVisitor
 		else
 			processItem("Caption: ", Data.stringof);
 		output_position ~= TreePosition(tree_path.value, position);
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		static if (is(typeof(model.orientation)))
+		{
+			orientation = old_orientation;
+		}
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
