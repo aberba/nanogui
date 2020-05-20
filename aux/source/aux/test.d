@@ -849,19 +849,30 @@ struct RendererVisitor
 version(unittest) @Name("size_measuring2")
 unittest
 {
+	@("orientation.Horizontal")
 	static struct Foo
 	{
 		long l = -1;
-		string s = "nested str";
+		string s = "Foo";
 	}
 
-	@("orientation.Horizontal")
-	struct Data
+	static struct Bar
+	{
+		long l = 9;
+		string s = "Bar";
+	}
+
+	static struct Data
 	{
 		float f;
 		int i;
 		string s = "str";
-		Foo foo;
+		Foo foo1;
+		@("orientation.Vertical")
+		Foo foo2;
+		Bar bar1;
+		@("orientation.Horizontal")
+		Bar bar2;
 	}
 
 	Data data;
@@ -871,12 +882,15 @@ unittest
 	model.size.should.be == 0;
 	setPropertyByTreePath!"collapsed"(data, model, [], false);
 	setPropertyByTreePath!"collapsed"(data, model, [3], false);
+	setPropertyByTreePath!"collapsed"(data, model, [4], false);
+	setPropertyByTreePath!"collapsed"(data, model, [5], false);
+	setPropertyByTreePath!"collapsed"(data, model, [6], false);
 
 	auto visitor = MeasureVisitor(120, 17);
 	model.visitForward(data, visitor);
 	visitor.size[0].should.be == 120;
 	visitor.size[1].should.be == 17;
-	model.size.should.be == 126;
+	model.size.should.be == 226;
 	model.f.size.should.be == 18;
 	model.i.size.should.be == 18;
 	model.s.size.should.be == 18;
@@ -885,24 +899,28 @@ unittest
 	model.visitForward(data, rv);
 	rv.size[0].should.be == 120;
 	rv.size[1].should.be == 17;
-	model.size.should.be == 126;
+	model.size.should.be == 226;
 	model.f.size.should.be == 18;
 	model.i.size.should.be == 18;
 	model.s.size.should.be == 18;
 
-	rv = RendererVisitor(120, 17);
-	rv.orientation = Orientation.Horizontal;
-	model.visitForward(data, rv);
-
 	rv.output_position[].should.be == [
-		TreePosition([],     [0,   0]),
-		TreePosition([],     [0,   0]),
-		TreePosition([0],    [18,  0]),
-		TreePosition([1],    [36,  0]),
-		TreePosition([2],    [54,  0]),
-		TreePosition([3],    [72,  0]),
-		TreePosition([3, 0], [90,  0]),
-		TreePosition([3, 1], [108, 0]),
+		TreePosition([],     [ 0, 0]),
+		TreePosition([0],    [ 0, 18]),
+		TreePosition([1],    [ 0, 36]),
+		TreePosition([2],    [ 0, 54]),
+		TreePosition([3],    [ 0, 72]), // foo1 has Horizontal orientation on account of its type attribute
+		TreePosition([3, 0], [18, 72]),
+		TreePosition([3, 1], [36, 72]),
+		TreePosition([4],    [ 0, 90]), // foo2 has Vertical orientation due to its own (symbol) attribute
+		TreePosition([4, 0], [ 0, 108]),
+		TreePosition([4, 1], [ 0, 126]),
+		TreePosition([5],    [ 0, 144]), // bar1 has Vertical orientation by default (defined by a visitor)
+		TreePosition([5, 0], [ 0, 162]),
+		TreePosition([5, 1], [ 0, 180]),
+		TreePosition([6],    [ 0, 198]), // bar2 has Horizontal orientation because its own attribute
+		TreePosition([6, 0], [18, 198]),
+		TreePosition([6, 1], [36, 198]),
 	];
 }
 

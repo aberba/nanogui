@@ -353,6 +353,7 @@ package template getRenderedAsMember(T)
 
 alias getRenderedAsMemberString(alias A) = getGivenAttributeAsString!(A, "renderedAsMember");
 alias getRenderedAsPointeeString(alias A) = getGivenAttributeAsString!(A, "renderedAsPointee");
+alias getOrientationString(alias A) = getGivenAttributeAsString!(A, "orientation");
 
 version(unittest) @Name("getRenderedAsMemberString")
 unittest
