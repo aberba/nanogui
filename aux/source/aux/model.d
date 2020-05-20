@@ -229,9 +229,13 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
-		if (collapsed)
-			return 0;
-		return sum(model[].map!"a.size", 0.0);
+		final switch(orientation)
+		{
+			case Orientation.Vertical:
+				return (collapsed) ? 0 : sum(model[].map!"a.size", 0.0);
+			case Orientation.Horizontal:
+				return 0;
+		}
 	}
 
 	mixin visitImpl;
@@ -279,9 +283,13 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
-		if (collapsed)
-			return 0;
-		return sum(model[].map!"a.size", 0.0);
+		final switch(orientation)
+		{
+			case Orientation.Vertical:
+				return (collapsed) ? 0 : sum(model[].map!"a.size", 0.0);
+			case Orientation.Horizontal:
+				return 0;
+		}
 	}
 
 	mixin visitImpl;
@@ -321,9 +329,15 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 	{
 		import std.algorithm : map, sum;
 
-		if (collapsed)
-			return 0;
-		return sum(model.map!"a.size", 0);
+		final switch(orientation)
+		{
+			case Orientation.Vertical:
+				if (!collapsed)
+					return sum(model[].map!"a.size", 0.0);
+			break;
+			case Orientation.Horizontal:
+				return 0;
+		}
 	}
 
 	void update(ref const(Data) data)
@@ -524,13 +538,18 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 
 			auto childrenSize() const @safe
 			{
-				if (collapsed)
-					return 0;
-
-				double total = 0;
-				static foreach(member; DrawableMembers!Data)
-					mixin("total += %1$s.size;".format(member));
-				return total;
+				final switch(orientation)
+				{
+					case Orientation.Vertical:
+						if (collapsed)
+							return 0;
+						double total = 0;
+						static foreach(member; DrawableMembers!Data)
+							mixin("total += %1$s.size;".format(member));
+						return total;
+					case Orientation.Horizontal:
+						return 0;
+				}
 			}
 
 			this()(auto ref const(Data) data)
