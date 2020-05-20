@@ -119,6 +119,15 @@ mixin template State()
 
 	private enum Field { Collapsed, Enabled, Orientation, }
 
+	// initialization procedure called by ctor
+	void initialization()
+	{
+		static if (getOrientationString!A.length)
+		{
+			orientation = mixin("Orientation." ~ getOrientationString!A[0]);
+		}
+	}
+
 	@property void collapsed(bool v)
 	{
 		if (collapsed != v)
@@ -215,12 +224,14 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 
 	this()(const(Data) data) if (Data.sizeof <= (void*).sizeof)
 	{
+		initialization;
 		foreach(i; 0..data.length)
 			model[i] = Model!ElementType(data[i]);
 	}
 
 	this()(ref const(Data) data) if (Data.sizeof > (void*).sizeof)
 	{
+		initialization;
 		foreach(i; 0..data.length)
 			model[i] = Model!ElementType(data[i]);
 	}
@@ -259,11 +270,13 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 
 	this()(const(Data) data) if (Data.sizeof <= (void*).sizeof)
 	{
+		initialization;
 		update(data);
 	}
 
 	this()(ref const(Data) data) if (Data.sizeof > (void*).sizeof)
 	{
+		initialization;
 		update(data);
 	}
 
@@ -317,11 +330,13 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 
 	this()(const(Data) data) if (Data.sizeof <= (void*).sizeof)
 	{
+		initialization;
 		update(data);
 	}
 
 	this()(ref const(Data) data) if (Data.sizeof > (void*).sizeof)
 	{
+		initialization;
 		update(data);
 	}
 
@@ -462,6 +477,7 @@ struct TaggedAlgebraicModel(alias A)// if (dataHasTaggedAlgebraicModel!(TypeOf!A
 
 	this()(auto ref const(Data) data)
 	{
+		initialization;
 		tamodel = makeModel(data);
 	}
 
@@ -554,6 +570,7 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 
 			this()(auto ref const(Data) data)
 			{
+				initialization;
 				foreach(member; DrawableMembers!Data)
 				{
 					static if (isNullable!(typeof(mixin("data." ~ member))) ||

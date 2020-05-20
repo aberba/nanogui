@@ -890,7 +890,7 @@ unittest
 	model.visitForward(data, visitor);
 	visitor.size[0].should.be == 120;
 	visitor.size[1].should.be == 17;
-	model.size.should.be == 226;
+	model.size.should.be == 216;
 	model.f.size.should.be == 18;
 	model.i.size.should.be == 18;
 	model.s.size.should.be == 18;
@@ -899,7 +899,7 @@ unittest
 	model.visitForward(data, rv);
 	rv.size[0].should.be == 120;
 	rv.size[1].should.be == 17;
-	model.size.should.be == 226;
+	model.size.should.be == 216;
 	model.f.size.should.be == 18;
 	model.i.size.should.be == 18;
 	model.s.size.should.be == 18;
