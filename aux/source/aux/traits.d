@@ -418,8 +418,10 @@ package template getGivenAttributeAsString(alias A, string GivenAttribute)
 		// check if the symbol type has it
 		static if (impl!A.length)
 			alias getGivenAttributeAsString = impl!A;
-		else
+		else static if (isSymbol!T)
 			alias getGivenAttributeAsString = impl!T;
+		else
+			alias getGivenAttributeAsString = AliasSeq!();
 	}
 	else static if (isSymbol!T)
 		alias getGivenAttributeAsString = impl!T;
