@@ -905,14 +905,14 @@ unittest
 	model.s.size.should.be == 18;
 
 	rv.output_position[].should.be == [
-		TreePosition([],     [ 0, 0]),
-		TreePosition([0],    [ 0, 18]),
-		TreePosition([1],    [ 0, 36]),
-		TreePosition([2],    [ 0, 54]),
-		TreePosition([3],    [ 0, 72]), // foo1 has Horizontal orientation on account of its type attribute
-		TreePosition([3, 0], [18, 72]),
-		TreePosition([3, 1], [36, 72]),
-		TreePosition([4],    [ 0, 90]), // foo2 has Vertical orientation due to its own (symbol) attribute
+		TreePosition([],     [ 0,   0]),
+		TreePosition([0],    [ 0,  18]),
+		TreePosition([1],    [ 0,  36]),
+		TreePosition([2],    [ 0,  54]),
+		TreePosition([3],    [ 0,  72]), // foo1 has Horizontal orientation on account of its type attribute
+		TreePosition([3, 0], [18,  72]),
+		TreePosition([3, 1], [36,  72]),
+		TreePosition([4],    [ 0,  90]), // foo2 has Vertical orientation due to its own (symbol) attribute
 		TreePosition([4, 0], [ 0, 108]),
 		TreePosition([4, 1], [ 0, 126]),
 		TreePosition([5],    [ 0, 144]), // bar1 has Vertical orientation by default (defined by a visitor)
