@@ -412,7 +412,14 @@ package template getGivenAttributeAsString(alias A, string GivenAttribute)
 	}
 
 	static if (isSymbol!A)
-		alias getGivenAttributeAsString = impl!A;
+	{
+		// if the symbol has no the attribute
+		// check if the symbol type has it
+		static if (impl!A.length)
+			alias getGivenAttributeAsString = impl!A;
+		else
+			alias getGivenAttributeAsString = impl!T;
+	}
 	else static if (isSymbol!T)
 		alias getGivenAttributeAsString = impl!T;
 	else
