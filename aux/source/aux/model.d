@@ -918,6 +918,8 @@ struct ScalarModel(alias A)
 		{
 			// (+) position change
 			position[orientation] += deferred_change[orientation];
+import std;
+writefln("[leaf ] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 
 			if (state.among(State.first, State.rest))
 			{
@@ -1009,6 +1011,8 @@ mixin template visitImpl()
 			{
 				// (+) position change
 				visitor.position[] += visitor.deferred_change[];
+import std;
+writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 			}
 		}
 
@@ -1025,7 +1029,10 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				// (+) deferred_change setup
-				visitor.deferred_change[orientation] = this.header_size;
+				visitor.deferred_change[orientation] = this.orientation == Orientation.Vertical ? 
+					this.header_size : this.size;
+import std;
+writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientation, this.size);
 				if (pos+deferred_change[orientation] > dest)
 				{
 					state = State.finishing;
@@ -1042,6 +1049,8 @@ mixin template visitImpl()
 				{
 					// (+) position change
 					visitor.position[] += visitor.deferred_change[];
+import std;
+writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 				}
 			}
 
@@ -1496,7 +1505,7 @@ struct MeasureVisitor
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size = model.header_size = size[orientation] + model.Spacing;
+		model.size = model.header_size = size[model.orientation] + model.Spacing;
 import std;
 debug writeln(Model.stringof, "\n\torientation: ", orientation, " model.orientation: ", model.orientation, 
 	"\n\tsize: ", size, " model.size: ", model.size);
@@ -1510,6 +1519,8 @@ debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
 		model.size += model.childrenSize;
+import std;
+debug writeln(Model.stringof, " leave", "\n\tmodel.size: ", model.size, " childrenSize: ", model.childrenSize);
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
