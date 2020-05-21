@@ -405,6 +405,14 @@ private struct RenderingVisitor
 	TreePath selected_item;
 	float finish;
 
+	typeof(ctx.orientation) old_orientation;
+	double old_x;
+
+	this(ref NanoContext ctx)
+	{
+		this.ctx = ctx;
+	}
+
 	bool complete()
 	{
 		return ctx.position.y > finish;
@@ -433,6 +441,16 @@ private struct RenderingVisitor
 			ctx.stroke;
 		}
 
+		static import nanogui.layout;
+		static if (is(typeof(model.orientation)))
+		{
+			old_orientation = ctx.orientation;
+			old_x = ctx.position.x;
+			ctx.orientation = cast(nanogui.layout.Orientation)(cast(int) model.orientation);
+		}
+
+		const shift = 1.6f * ctx.size.y;
+		if (ctx.orientation == nanogui.layout.Orientation.Vertical)
 		{
 			// background for icon
 			NVGPaint bg = ctx.boxGradient(
@@ -447,9 +465,7 @@ private struct RenderingVisitor
 				ctx.size[ctx.orientation] - 2.0f, ctx.size[ctx.orientation] - 2.0f, 3);
 			ctx.fillPaint(bg);
 			ctx.fill;
-		}
 
-		{
 			// icon
 			ctx.fontSize(ctx.size.y);
 			ctx.fontFace("icons");
@@ -471,18 +487,13 @@ private struct RenderingVisitor
 				selected_item = tree_path;
 			ctx.size[axis2] = old; // restore full width
 			ctx.position[ctx.orientation] -= ctx.size[ctx.orientation];
+
+			ctx.position.x += shift;
+			ctx.size.x -= shift;
 		}
 
 		{
 			// Caption
-			const shift = 1.6f * ctx.size.y;
-			ctx.position.x += shift;
-			ctx.size.x -= shift;
-			scope(exit)
-			{
-				ctx.position.x -= shift;
-				ctx.size.x += shift;
-			}
 			ctx.fontSize(ctx.size.y);
 			ctx.fontFace("sans");
 			ctx.fillColor(model.enabled ? ctx.theme.mTextColor : ctx.theme.mDisabledTextColor);
@@ -502,6 +513,24 @@ private struct RenderingVisitor
 			if (drawItem(ctx, header))
 				selected_item = tree_path;
 			ctx.size[ctx.orientation] = old;
+		}
+
+		if (ctx.orientation == nanogui.layout.Orientation.Vertical)
+		{
+			ctx.position.x -= shift;
+			ctx.size.x += shift;
+		}
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		if (model.orientation == Orientation.Horizontal)
+			ctx.position.y += ctx.size.y + model.Spacing;
+
+		static if (is(typeof(model.orientation)))
+		{
+			ctx.orientation = old_orientation;
+			ctx.position.x = old_x;
 		}
 	}
 
