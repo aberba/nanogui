@@ -1007,7 +1007,7 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				// (+) position change
-				visitor.position[visitor.orientation] += visitor.deferred_change[visitor.orientation];
+				visitor.position[] += visitor.deferred_change[];
 			}
 		}
 
@@ -1040,7 +1040,7 @@ mixin template visitImpl()
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
 					// (+) position change
-					visitor.position[orientation] += visitor.deferred_change[orientation];
+					visitor.position[] += visitor.deferred_change[];
 				}
 			}
 
@@ -1110,7 +1110,7 @@ mixin template visitImpl()
 						// position should change only if we've got the initial path
 						// and don't get the end
 						// (+) deferred_change setup
-						if (visitor.state == visitor.State.seeking) visitor.deferred_change[visitor.orientation] = 0;
+						if (visitor.state == visitor.State.seeking) visitor.deferred_change[] = 0;
 					}
 				}
 			}
