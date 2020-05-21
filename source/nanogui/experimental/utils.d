@@ -87,7 +87,10 @@ private auto drawString(Char)(ref NanoContext ctx, const(Char)[] str)
 	}
 	ctx.textAlign(ctx.algn);
 	ctx.text(ctx.position.x, ctx.position.y, str);
-	ctx.position.y += ctx.size.y;
+	if (ctx.orientation == ctx.orientation.Vertical)
+		ctx.position.y += ctx.size.y;
+	else
+		ctx.position.x += ctx.size.x;
 
 	return inside;
 }
