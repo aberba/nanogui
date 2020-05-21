@@ -319,7 +319,7 @@ class MyGui : SdlBackend
 			{
 				import std.conv : text;
 				import std.random : uniform;
-				const x = uniform(0, 6);
+				const x = uniform(0, 7);
 				switch(x)
 				{
 					case 0:
@@ -342,10 +342,14 @@ class MyGui : SdlBackend
 						Test t;
 						data ~= Item(t);
 					break;
-					default:
 					case 5:
 						Test2 t2;
 						data ~= Item(t2);
+					break;
+					default:
+					case 6:
+						Test3 t3;
+						data ~= Item(t3);
 					break;
 				}
 			}
@@ -501,6 +505,13 @@ struct Test2
 	Test t;
 }
 
+@("orientation.Horizontal")
+struct Test3
+{
+	string label = "test3:";
+	float value = 1.234567e34;
+}
+
 import taggedalgebraic : TaggedAlgebraic;
 union Payload
 {
@@ -510,6 +521,7 @@ union Payload
 	double d;
 	Test t;
 	Test2 t2;
+	Test3 t3;
 }
 alias Item = TaggedAlgebraic!Payload;
 
