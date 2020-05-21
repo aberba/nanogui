@@ -997,10 +997,11 @@ mixin template visitImpl()
 			return true;
 		}
 
-		static if (hasTreePath && Sinking) with(visitor)
+		static if (hasTreePath && Sinking)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
+				// (+) position change
 				visitor.position[visitor.orientation] += visitor.deferred_change[visitor.orientation];
 			}
 		}
@@ -1017,6 +1018,7 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
+				// (+) deferred_change setup
 				visitor.deferred_change[orientation] = this.header_size;
 				if (pos+deferred_change[orientation] > dest)
 				{
@@ -1028,11 +1030,12 @@ mixin template visitImpl()
 
 		scope(exit)
 		{
-			static if (hasTreePath && Bubbling) with(visitor)
+			static if (hasTreePath && Bubbling)
 			{
-				if (state.among(State.first, State.rest))
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					position[orientation] += deferred_change[orientation];
+					// (+) position change
+					visitor.position[orientation] += visitor.deferred_change[orientation];
 				}
 			}
 
@@ -1051,6 +1054,7 @@ mixin template visitImpl()
 			{
 				if (state.among(State.first, State.rest))
 				{
+					// (+) deferred_change setup
 					deferred_change[orientation] = -this.header_size;
 					if (pos <= dest)
 					{
@@ -1100,6 +1104,7 @@ mixin template visitImpl()
 						start_value = visitor.path.value[idx-1];
 						// position should change only if we've got the initial path
 						// and don't get the end
+						// (+) deferred_change setup
 						if (visitor.state == visitor.State.seeking) visitor.deferred_change[visitor.orientation] = 0;
 					}
 				}
