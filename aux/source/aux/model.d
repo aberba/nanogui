@@ -916,6 +916,7 @@ struct ScalarModel(alias A)
 
 		static if (hasTreePath) with(visitor) 
 		{
+			// (+) position change
 			position[orientation] += deferred_change[orientation];
 
 			if (state.among(State.first, State.rest))
@@ -1024,7 +1025,7 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				// (+) deferred_change setup
-				visitor.deferred_change[orientation] = this.size;
+				visitor.deferred_change[orientation] = this.header_size;
 				if (pos+deferred_change[orientation] > dest)
 				{
 					state = State.finishing;
@@ -1061,7 +1062,7 @@ mixin template visitImpl()
 				if (state.among(State.first, State.rest))
 				{
 					// (+) deferred_change setup
-					deferred_change[orientation] = -this.size;
+					deferred_change[orientation] = -this.header_size;
 					if (pos <= dest)
 					{
 						state = State.finishing;
