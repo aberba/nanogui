@@ -136,7 +136,7 @@ unittest
 }
 
 version(unittest) @Name("static_array")
-@nogc
+//@nogc
 unittest
 {
 	version(Windows) {}
@@ -215,7 +215,8 @@ Caption: float[]
 }
 
 version(unittest) @Name("aggregate_with_only_member")
-@nogc unittest
+// @nogc
+unittest
 {
 	static struct OneMember
 	{
@@ -604,7 +605,7 @@ Caption: TaggedAlgebraic!(Payload)[]
 }
 
 version(unittest) @Name("nogc_dynamic_array")
-@nogc
+//@nogc
 unittest
 {
 	import std.experimental.allocator.mallocator : Mallocator;
