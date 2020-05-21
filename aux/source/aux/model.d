@@ -1038,6 +1038,15 @@ mixin template visitImpl()
 
 			visitor.leaveNode!order(data, this);
 
+			static if (hasTreePath && is(typeof(this.orientation)) && is(typeof(visitor.orientation)))
+			{
+				// Text direction is left right top down,
+				// so reset x position
+				if (Orientation.Horizontal == this.orientation  && 
+				    Orientation.Vertical   == visitor.orientation)
+					visitor.deferred_change[Orientation.Horizontal] = 0;
+			}
+
 			static if (hasTreePath && Bubbling) with(visitor)
 			{
 				if (state.among(State.first, State.rest))
