@@ -176,6 +176,11 @@ mixin template State()
 
 enum Orientation { Horizontal, Vertical }
 
+Orientation nextAxis(Orientation axis) @safe @nogc
+{
+	return cast(Orientation) ((axis + 1) % 2);
+}
+
 template Model(alias A)
 {
 	import std.typecons : Nullable;
