@@ -1481,6 +1481,240 @@ unittest
 	];
 }
 
+version(unittest) @Name("aggregate+orientation")
+unittest
+{
+	import unit_threaded : should, be;
+	import std.experimental.allocator.mallocator : Mallocator;
+	import automem.vector : Vector;
+
+	static struct OrientationState
+	{
+		import std.range : isOutputRange, ElementType;
+
+		string label;
+		Orientation orientation;
+	}
+
+	struct MeasureVisitor2
+	{
+		MeasureVisitor mvisitor;
+		alias mvisitor this;
+
+		Vector!(Orientation, Mallocator) stack_orientation;
+
+		Vector!(OrientationState, Mallocator) output_orientation;
+
+		this(float width, float height) @nogc
+		{
+			mvisitor = MeasureVisitor(width, height);
+		}
+
+		void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			stack_orientation.put(orientation);
+			orientation = model.orientation;
+			output_orientation.put(OrientationState("enterNode   " ~ Model.stringof ~ " ", orientation));
+			mvisitor.enterNode!order(data, model);
+		}
+
+		void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			mvisitor.leaveNode!order(data, model);
+			orientation = stack_orientation[$-1];
+			stack_orientation.popBack;
+			output_orientation.put(OrientationState("leaveNode   " ~ Model.stringof ~ " ", orientation));
+		}
+
+		void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			output_orientation.put(OrientationState("processLeaf " ~ Model.stringof ~ " ", orientation));
+			mvisitor.processLeaf!order(data, model);
+		}
+	}
+
+	static struct V
+	{
+		long a;
+		char b;
+	}
+
+	@("orientation.Horizontal")
+	static struct H
+	{
+		long a;
+		char b;
+	}
+
+	static struct VH
+	{
+		long a;
+		H h;
+		char b;
+	}
+
+	@("orientation.Horizontal")
+	static struct HV
+	{
+		long a;
+		V v;
+		char b;
+	}
+
+	@("orientation.Horizontal")
+	static struct HVHV
+	{
+		long a;
+		HV hv;
+		char b;
+	}
+
+	static struct VHVH
+	{
+		long a;
+		VH vh;
+		char b;
+	}
+
+	static struct NestedData2
+	{
+		short sh;
+		@("orientation.Horizontal")
+		V h;
+		string str;
+	}
+
+	static struct Data
+	{
+		int i;
+		float f;
+		double d;
+		string s;
+		NestedData2 data2;
+	}
+
+	{
+		const data = V(1, 'z');
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 9);
+		model.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(V) ", Orientation.Vertical), 
+			OrientationState("processLeaf ScalarModel!(a) ",    Orientation.Vertical), 
+			OrientationState("processLeaf ScalarModel!(b) ",    Orientation.Vertical), 
+			OrientationState("leaveNode   AggregateModel!(V) ", Orientation.Vertical)
+		];
+	}
+	{
+		const data = H(1, 'z');
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 9);
+		auto default_orientation = mv.orientation;
+		model.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(H) ", Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",    Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",    Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(H) ", default_orientation),
+		];
+	}
+	{
+		const data = VH(1, H(1, 'z'), 'z');
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 9);
+		model.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(VH) ", Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Vertical  ), 
+			OrientationState("enterNode   AggregateModel!(h) ",  Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(VH) ", Orientation.Vertical  ),
+		];
+
+		mv = MeasureVisitor2(120, 9);
+		model.h.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(VH) ", Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Vertical  ), 
+			OrientationState("enterNode   AggregateModel!(h) ",  Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(VH) ", Orientation.Vertical  ),
+		];
+	}
+	{
+		const data = HV(1, V(1, 'z'), 'z');
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 9);
+		model.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(HV) ", Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Horizontal), 
+			OrientationState("enterNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Vertical),
+		];
+
+		mv = MeasureVisitor2(120, 9);
+		model.v.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(HV) ", Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Horizontal), 
+			OrientationState("enterNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Vertical  ),
+		];
+	}
+	{
+		const data = HVHV(1, HV(2, V(3, 'x'), 'y'), 'z');
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 9);
+		model.collapsed = false;
+		model.hv.collapsed = false;
+		model.hv.v.collapsed = false;
+		model.visitForward(data, mv);
+
+		/*
+		HVHV HVHV.l HVHV.hv HVHV.hv.l HVHV.hv.v    HVHV.hv.ch HVHV.ch
+		                              HVHV.hv.v.l
+		                              HVHV.hv.v.ch
+		*/
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   AggregateModel!(HVHV) ", Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",       Orientation.Horizontal), 
+			OrientationState("enterNode   AggregateModel!(hv) ",   Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(a) ",       Orientation.Horizontal), 
+			OrientationState("enterNode   AggregateModel!(v) ",    Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(a) ",       Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(v) ",    Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(hv) ",   Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(HVHV) ", Orientation.Vertical  ),
+		];
+	}
+}
+
 version(unittest) @Name("new_paradigm")
 unittest
 {
