@@ -248,7 +248,16 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 		final switch(orientation)
 		{
 			case Orientation.Vertical:
-				return (collapsed) ? 0 : sum(model[].map!"a.size", 0.0);
+				double total = 0;
+				foreach(child; model[])
+				{
+					final switch (child.orientation)
+					{
+						case Orientation.Vertical:   total += child.size; break;
+						case Orientation.Horizontal: total += child.header_size; break;
+					}
+				}
+				return total;
 			case Orientation.Horizontal:
 				return 0;
 		}
@@ -304,7 +313,16 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 		final switch(orientation)
 		{
 			case Orientation.Vertical:
-				return (collapsed) ? 0 : sum(model[].map!"a.size", 0.0);
+				double total = 0;
+				foreach(child; model[])
+				{
+					final switch (child.orientation)
+					{
+						case Orientation.Vertical:   total += child.size; break;
+						case Orientation.Horizontal: total += child.header_size; break;
+					}
+				}
+				return total;
 			case Orientation.Horizontal:
 				return 0;
 		}
@@ -352,9 +370,16 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 		final switch(orientation)
 		{
 			case Orientation.Vertical:
-				if (!collapsed)
-					return sum(model[].map!"a.size", 0.0);
-			break;
+				double total = 0;
+				foreach(child; model[])
+				{
+					final switch (child.orientation)
+					{
+						case Orientation.Vertical:   total += child.size; break;
+						case Orientation.Horizontal: total += child.header_size; break;
+					}
+				}
+				return total;
 			case Orientation.Horizontal:
 				return 0;
 		}
@@ -426,6 +451,22 @@ struct TaggedAlgebraicModel(alias A)// if (dataHasTaggedAlgebraicModel!(TypeOf!A
 					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
 						static if (is(typeof(taget!FT(value).collapsed) == bool))
 							return taget!FT(value).collapsed;
+						else
+							assert(0);
+				}
+			}
+			assert(0); // never reached
+		}
+
+		@property Orientation orientation() const
+		{
+			final switch(value.kind)
+			{
+				foreach (i, FT; value.UnionType.FieldTypes)
+				{
+					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
+						static if (is(typeof(taget!FT(value).orientation) == Orientation))
+							return taget!FT(value).orientation;
 						else
 							assert(0);
 				}
@@ -565,7 +606,13 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 							return 0;
 						double total = 0;
 						static foreach(member; DrawableMembers!Data)
-							mixin("total += %1$s.size;".format(member));
+						{
+							final switch (mixin(member).orientation)
+							{
+								case Orientation.Vertical:   mixin("total += %1$s.size;".format(member)); break;
+								case Orientation.Horizontal: mixin("total += %1$s.header_size;".format(member)); break;
+							}
+						}
 						return total;
 					case Orientation.Horizontal:
 						return 0;
@@ -868,6 +915,8 @@ struct ScalarModel(alias A)
 	float size = 0;
 
 	enum Collapsable = false;
+	enum orientation = Orientation.Horizontal;
+	@property double header_size() const { return size; }
 
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
