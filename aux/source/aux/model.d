@@ -937,20 +937,24 @@ struct ScalarModel(alias A)
 
 		static if (hasTreePath) with(visitor) 
 		{
-			// (+) position change
-			position[orientation] += deferred_change[orientation];
+			// (+) position change (leaf)
+			position[] += deferred_change[];
+			const local_orientation = visitor.orientation;
+			const local_size = (this.orientation == Orientation.Horizontal) ? this.size : visitor.size[Orientation.Vertical];
+			// (+) deferred_change setup (leaf)
+			const delta = (Sinking) ? local_size : -local_size;
 import std;
-writefln("[leaf ] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+writefln("[leaf ] pos: %s, deferred: %s orient: %s delta: %s", visitor.position, visitor.deferred_change, local_orientation, delta);
 
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
 				{
 					visitor.processLeaf!order(data, this);
-					deferred_change[orientation] = (Sinking) ? this.size : -this.size;
+					deferred_change[local_orientation] = delta;
 				}
-				if ((Sinking  && pos+deferred_change[orientation] > dest) ||
-					(Bubbling && pos                              < dest))
+				if ((Sinking  && pos+deferred_change[local_orientation] > dest) ||
+					(Bubbling && pos                                   < dest))
 				{
 					state = State.finishing;
 					path = tree_path;
@@ -958,11 +962,11 @@ writefln("[leaf ] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 				static if (Bubbling)
 				{
 					visitor.processLeaf!order(data, this);
-					deferred_change[orientation] = (Sinking) ? this.size : -this.size;
+					deferred_change[local_orientation] = delta;
 				}
 			}
 			else
-				deferred_change[orientation] = (Sinking) ? this.size : -this.size;
+				deferred_change[local_orientation] = delta;
 		}
 		else
 			visitor.processLeaf!order(data, this);
@@ -1030,7 +1034,7 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				// (+) position change
+				// (+) position change (sinking)
 				visitor.position[] += visitor.deferred_change[];
 import std;
 writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
@@ -1048,16 +1052,15 @@ writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 		else
 			visitor.enterNode!(order, Data)(data, this);
 
-		static if (hasTreePath && Sinking) with(visitor)
+		static if (hasTreePath && Sinking)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				// (+) deferred_change setup
-				visitor.deferred_change[orientation] = this.orientation == Orientation.Vertical ? 
-					this.header_size : this.size;
+				// (+) deferred_change setup (sinking)
+				visitor.deferred_change[orientation] = header_size;
 import std;
 writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientation, this.size);
-				if (pos+deferred_change[orientation] > dest)
+				with(visitor) if (pos+deferred_change[this.orientation] > dest)
 				{
 					state = State.finishing;
 					path = tree_path;
@@ -1071,7 +1074,7 @@ writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientatio
 			{
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					// (+) position change
+					// (+) position change (bubbling)
 					visitor.position[] += visitor.deferred_change[];
 import std;
 writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
@@ -1084,7 +1087,7 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 
 			static if (hasTreePath && is(typeof(this.orientation)) && is(typeof(visitor.orientation)))
 			{
-				// (+) deferred_change setup
+				// (+) deferred_change setup (caret return)
 				// Text direction is left right top down,
 				// so reset x position
 				if (Orientation.Horizontal == this.orientation  && 
@@ -1096,8 +1099,8 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 			{
 				if (state.among(State.first, State.rest))
 				{
-					// (+) deferred_change setup
-					deferred_change[orientation] = -this.header_size;
+					// (+) deferred_change setup (bubbling)
+					deferred_change[this.orientation] = -this.header_size;
 					if (pos <= dest)
 					{
 						state = State.finishing;
@@ -1146,7 +1149,7 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 						start_value = visitor.path.value[idx-1];
 						// position should change only if we've got the initial path
 						// and don't get the end
-						// (+) deferred_change setup
+						// (+) deferred_change setup (seeking)
 						if (visitor.state == visitor.State.seeking) visitor.deferred_change[] = 0;
 					}
 				}
