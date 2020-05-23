@@ -241,26 +241,19 @@ struct StaticArrayModel(alias A)// if (dataHasStaticArrayModel!(TypeOf!A))
 			model[i] = Model!ElementType(data[i]);
 	}
 
-	auto childrenSize() const @safe
+	auto childrenSize(double[2] visitor_size) const @safe
 	{
-		import std.algorithm : map, sum;
-
-		final switch(orientation)
+		double[2] local_size = 0;
+		if (collapsed)
+			return local_size[orientation];
+		foreach(ref m; model)
 		{
-			case Orientation.Vertical:
-				double total = 0;
-				foreach(child; model[])
-				{
-					final switch (child.orientation)
-					{
-						case Orientation.Vertical:   total += child.size; break;
-						case Orientation.Horizontal: total += child.header_size; break;
-					}
-				}
-				return total;
-			case Orientation.Horizontal:
-				return 0;
+			auto axis = m.orientation;
+			local_size[axis] += m.size;
+			axis = axis.nextAxis;
+			local_size[axis] += visitor_size[axis] + Spacing;
 		}
+		return local_size[orientation];
 	}
 
 	mixin visitImpl;
@@ -306,26 +299,19 @@ struct RaRModel(alias A)// if (dataHasRandomAccessRangeModel!(TypeOf!A))
 		update(taget!Data(v));
 	}
 
-	auto childrenSize() const @trusted
+	auto childrenSize(double[2] visitor_size) const @trusted
 	{
-		import std.algorithm : map, sum;
-
-		final switch(orientation)
+		double[2] local_size = 0;
+		if (collapsed)
+			return local_size[orientation];
+		foreach(ref m; model)
 		{
-			case Orientation.Vertical:
-				double total = 0;
-				foreach(child; model[])
-				{
-					final switch (child.orientation)
-					{
-						case Orientation.Vertical:   total += child.size; break;
-						case Orientation.Horizontal: total += child.header_size; break;
-					}
-				}
-				return total;
-			case Orientation.Horizontal:
-				return 0;
+			auto axis = m.orientation;
+			local_size[axis] += m.size;
+			axis = axis.nextAxis;
+			local_size[axis] += visitor_size[axis] + Spacing;
 		}
+		return local_size[orientation];
 	}
 
 	mixin visitImpl;
@@ -363,26 +349,19 @@ struct AssocArrayModel(alias A)// if (dataHasAssociativeArrayModel!(TypeOf!A))
 		update(data);
 	}
 
-	auto childrenSize() const @safe
+	auto childrenSize(double[2] visitor_size) const @safe
 	{
-		import std.algorithm : map, sum;
-
-		final switch(orientation)
+		double[2] local_size = 0;
+		if (collapsed)
+			return local_size[orientation];
+		foreach(ref m; model)
 		{
-			case Orientation.Vertical:
-				double total = 0;
-				foreach(child; model[])
-				{
-					final switch (child.orientation)
-					{
-						case Orientation.Vertical:   total += child.size; break;
-						case Orientation.Horizontal: total += child.header_size; break;
-					}
-				}
-				return total;
-			case Orientation.Horizontal:
-				return 0;
+			auto axis = m.orientation;
+			local_size[axis] += m.size;
+			axis = axis.nextAxis;
+			local_size[axis] += visitor_size[axis] + Spacing;
 		}
+		return local_size[orientation];
 	}
 
 	void update(ref const(Data) data)
@@ -487,14 +466,14 @@ struct TaggedAlgebraicModel(alias A)// if (dataHasTaggedAlgebraicModel!(TypeOf!A
 			assert(0);
 		}
 
-		auto childrenSize() const @safe
+		auto childrenSize(double[2] visitor_size) const @safe
 		{
 			final switch(value.kind)
 			{
 				foreach (i, FT; value.UnionType.FieldTypes)
 				{
 					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
-						return taget!FT(value).childrenSize;
+						return taget!FT(value).childrenSize(visitor_size);
 				}
 			}
 			assert(0);
@@ -597,26 +576,19 @@ template AggregateModel(alias A) // if (dataHasAggregateModel!(TypeOf!A) && !is(
 			static foreach(member; DrawableMembers!Data)
 				mixin("Model!(Data.%1$s) %1$s;".format(member));
 
-			auto childrenSize() const @safe
+			auto childrenSize(double[2] visitor_size) const @safe
 			{
-				final switch(orientation)
-				{
-					case Orientation.Vertical:
-						if (collapsed)
-							return 0;
-						double total = 0;
-						static foreach(member; DrawableMembers!Data)
-						{
-							final switch (mixin(member).orientation)
-							{
-								case Orientation.Vertical:   mixin("total += %1$s.size;".format(member)); break;
-								case Orientation.Horizontal: mixin("total += %1$s.header_size;".format(member)); break;
-							}
-						}
-						return total;
-					case Orientation.Horizontal:
-						return 0;
-				}
+				double[2] local_size = 0;
+				if (collapsed)
+					return local_size[orientation];
+				static foreach(member; DrawableMembers!Data)
+				{{
+					auto axis = mixin(member).orientation;
+					local_size[axis] += mixin("%1$s.size".format(member));
+					axis = axis.nextAxis;
+					local_size[axis] += visitor_size[axis] + Spacing;
+				}}
+				return local_size[orientation];
 			}
 
 			this()(auto ref const(Data) data)
@@ -925,9 +897,9 @@ struct ScalarModel(alias A)
 	{
 	}
 
-	auto childrenSize() const @safe
+	auto childrenSize(double[2] visitor_size) const @safe
 	{
-		return 0;
+		return visitor_size[orientation];
 	}
 
 	private bool visit(Order order, Visitor)(auto ref const(Data) data, ref Visitor visitor)
@@ -1541,7 +1513,7 @@ struct MeasureVisitor
 	NullVisitor null_visitor;
 	alias null_visitor this;
 
-	float[2] size;
+	double[2] size;
 	import aux.model : Orientation;
 	Orientation orientation;
 
@@ -1567,9 +1539,9 @@ debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size += model.childrenSize;
+		model.size += model.childrenSize(size);
 import std;
-debug writeln(Model.stringof, " leave", "\n\tmodel.size: ", model.size, " childrenSize: ", model.childrenSize);
+debug writeln(Model.stringof, " leave", "\n\tmodel.size: ", model.size, " childrenSize: ", model.childrenSize(size));
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
