@@ -1810,6 +1810,21 @@ unittest
 			SizeState("leaveNode   AggregateModel!(HV) ", 484),
 		];
 
+		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		model.visitForward(data, rv);
+
+		// rv.output_position[].should.be == [
+		// 	PositionState("enterNode   AggregateModel!(HV) ", [  0, 0]), 
+		// 	PositionState("processLeaf ScalarModel!(a) ",     [121, 0]), 
+		// 	PositionState("enterNode   AggregateModel!(v) ",  [242, 0]), 
+		// 	PositionState("leaveNode   AggregateModel!(v) ",  [242, 0]), 
+		// 	PositionState("processLeaf ScalarModel!(b) ",     [242, 10]), 
+		// 	PositionState("leaveNode   AggregateModel!(HV) ", [242, 10]),
+		// ];
+
+		// model.size.should.be == 121;
+
 		mv = MeasureVisitor2(120, 9);
 		model.v.collapsed = false;
 		model.visitForward(data, mv);
