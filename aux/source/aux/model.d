@@ -1160,11 +1160,21 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 					}
 				}
 			}
+
+			// stashed visitor size
+			typeof(visitor.size) vs = void;
+
 			static if (dataHasStaticArrayModel!Data || 
 			           dataHasRandomAccessRangeModel!Data ||
 			           dataHasAssociativeArrayModel!Data)
 			{
-				foreach(i; TwoFacedRange!order(start_value, data.length))
+				auto childIndices = TwoFacedRange!order(start_value, data.length);
+				if (visitor.orientation == Orientation.Horizontal)
+				{
+					vs = visitor.size;
+					visitor.size[visitor.orientation] = (visitor.size[visitor.orientation] - this.Spacing*(childIndices.length-1)) / childIndices.length;
+				}
+				foreach(i; childIndices)
 				{
 					static if (hasTreePath) visitor.tree_path.back = i;
 					auto idx = getIndex!(Data)(this, i);
@@ -1173,9 +1183,16 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 						return true;
 					}
 				}
+				if (visitor.orientation == Orientation.Horizontal)
+					visitor.size = vs;
 			}
 			else static if (dataHasAggregateModel!Data)
 			{
+				if (visitor.orientation == Orientation.Horizontal)
+				{
+					vs = visitor.size;
+					visitor.size[visitor.orientation] = (visitor.size[visitor.orientation] - this.Spacing*(len-1)) / len;
+				}
 				switch(start_value)
 				{
 					static foreach(i; 0..len)
@@ -1202,6 +1219,8 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 					default:
 						assert(0);
 				}
+				if (visitor.orientation == Orientation.Horizontal)
+					visitor.size = vs;
 			}
 		}
 
