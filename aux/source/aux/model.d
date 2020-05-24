@@ -1084,7 +1084,7 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 
 			visitor.orientation = old_orientation;
 
-			static if (hasTreePath && is(typeof(this.orientation)) && is(typeof(visitor.orientation)))
+			static if (hasTreePath && is(typeof(this.orientation)))
 			{
 				// (+) deferred_change setup (caret return)
 				// Text direction is left right top down,
