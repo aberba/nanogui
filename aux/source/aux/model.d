@@ -1595,7 +1595,9 @@ debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
-		model.size += model.childrenSize(size);
+		assert(this.orientation == model.orientation);
+		if (model.orientation == Orientation.Vertical)
+			model.size += model.childrenSize(size);
 import std;
 debug writeln(Model.stringof, " leave", "\n\tmodel.size: ", model.size, " childrenSize: ", model.childrenSize(size));
 	}
