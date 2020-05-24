@@ -19,7 +19,7 @@ struct PrettyPrintingVisitor
 
 	this(float width, float height) @nogc
 	{
-		measure_visitor = MeasureVisitor(width, height);
+		measure_visitor = MeasureVisitor(width, height, Orientation.Vertical);
 		measure_visitor.orientation = Orientation.Vertical;
 	}
 
@@ -889,7 +889,7 @@ unittest
 	setPropertyByTreePath!"collapsed"(data, model, [5], false);
 	setPropertyByTreePath!"collapsed"(data, model, [6], false);
 
-	auto visitor = MeasureVisitor(120, 17);
+	auto visitor = MeasureVisitor(120, 17, Orientation.Vertical);
 	model.visitForward(data, visitor);
 	visitor.size[0].should.be == 120;
 	visitor.size[1].should.be == 17;
@@ -1027,7 +1027,7 @@ version(unittest)
 
 			// measure size
 			{
-				auto mv = MeasureVisitor(120, 9);
+				auto mv = MeasureVisitor(120, 9, Orientation.Vertical);
 				model.visitForward(data, mv);
 			}
 		}
@@ -1327,7 +1327,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasureVisitor(120, 9);
+		auto mv = MeasureVisitor(120, 9, Orientation.Vertical);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;
@@ -1401,7 +1401,7 @@ unittest
 
 	model.collapsed = false;
 	{
-		auto mv = MeasureVisitor(120, 9);
+		auto mv = MeasureVisitor(120, 9, Orientation.Vertical);
 		model.visitForward(data, mv);
 	}
 	visitor.position = 0;
@@ -1505,20 +1505,16 @@ unittest
 		MeasureVisitor mvisitor;
 		alias mvisitor this;
 
-		Vector!(Orientation, Mallocator) stack_orientation;
-
 		Vector!(OrientationState, Mallocator) output_orientation;
 		Vector!(SizeState, Mallocator) output_size;
 
 		this(float width, float height) @nogc
 		{
-			mvisitor = MeasureVisitor(width, height);
+			mvisitor = MeasureVisitor(width, height, Orientation.Vertical);
 		}
 
 		void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 		{
-			stack_orientation.put(orientation);
-			orientation = model.orientation;
 			output_orientation.put(OrientationState("enterNode   " ~ Model.stringof ~ " ", orientation));
 
 			mvisitor.enterNode!order(data, model);
@@ -1531,8 +1527,6 @@ unittest
 			mvisitor.leaveNode!order(data, model);
 
 			output_size.put(SizeState("leaveNode   " ~ Model.stringof ~ " ", model.size));
-			orientation = stack_orientation[$-1];
-			stack_orientation.popBack;
 			output_orientation.put(OrientationState("leaveNode   " ~ Model.stringof ~ " ", orientation));
 		}
 
@@ -1631,7 +1625,6 @@ unittest
 		const data = H(1, 'z');
 		auto model = makeModel(data);
 		auto mv = MeasureVisitor2(120, 9);
-		auto default_orientation = mv.orientation;
 		model.collapsed = false;
 		model.visitForward(data, mv);
 
@@ -1639,7 +1632,7 @@ unittest
 			OrientationState("enterNode   AggregateModel!(H) ", Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(a) ",    Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(b) ",    Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(H) ", default_orientation),
+			OrientationState("leaveNode   AggregateModel!(H) ", Orientation.Horizontal),
 		];
 
 		mv.output_size[].should.be == [
@@ -1660,7 +1653,7 @@ unittest
 			OrientationState("enterNode   AggregateModel!(VH) ", Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Vertical  ), 
 			OrientationState("enterNode   AggregateModel!(h) ",  Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
 			OrientationState("leaveNode   AggregateModel!(VH) ", Orientation.Vertical  ),
 		];
@@ -1684,7 +1677,7 @@ unittest
 			OrientationState("enterNode   AggregateModel!(h) ",  Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Vertical  ), 
+			OrientationState("leaveNode   AggregateModel!(h) ",  Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
 			OrientationState("leaveNode   AggregateModel!(VH) ", Orientation.Vertical  ),
 		];
@@ -1711,9 +1704,9 @@ unittest
 			OrientationState("enterNode   AggregateModel!(HV) ", Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Horizontal), 
 			OrientationState("enterNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
-			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Vertical),
+			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Horizontal),
 		];
 
 		mv.output_size[].should.be == [
@@ -1735,9 +1728,9 @@ unittest
 			OrientationState("enterNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(a) ",     Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Vertical  ), 
-			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(v) ",  Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(b) ",     Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Vertical  ),
+			OrientationState("leaveNode   AggregateModel!(HV) ", Orientation.Horizontal),
 		];
 
 		mv.output_size[].should.be == [
@@ -1773,11 +1766,11 @@ unittest
 			OrientationState("enterNode   AggregateModel!(v) ",    Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(a) ",       Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Vertical  ), 
-			OrientationState("leaveNode   AggregateModel!(v) ",    Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(v) ",    Orientation.Vertical  ), 
 			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Horizontal), 
 			OrientationState("leaveNode   AggregateModel!(hv) ",   Orientation.Horizontal), 
 			OrientationState("processLeaf ScalarModel!(b) ",       Orientation.Horizontal), 
-			OrientationState("leaveNode   AggregateModel!(HVHV) ", Orientation.Vertical  ),
+			OrientationState("leaveNode   AggregateModel!(HVHV) ", Orientation.Horizontal),
 		];
 
 		mv.output_size[].should.be == [

@@ -1037,6 +1037,9 @@ writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 			}
 		}
 
+		auto old_orientation = visitor.orientation;
+		visitor.orientation = this.orientation;
+
 		static if (hasTreePath)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
@@ -1076,6 +1079,8 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 			}
 
 			visitor.leaveNode!order(data, this);
+
+			visitor.orientation = old_orientation;
 
 			static if (hasTreePath && is(typeof(this.orientation)) && is(typeof(visitor.orientation)))
 			{
@@ -1467,6 +1472,16 @@ struct DefaultVisitorImpl(
 {
 	alias treePathEnabled = _tree_path_;
 
+	Orientation orientation;
+	double[2] size;
+
+	this(float width, float height, Orientation orientation) @nogc
+	{
+		size[0] = width;
+		size[1] = height;
+		this.orientation = orientation;
+	}
+
 	static if (treePathEnabled == TreePathEnabled.yes)
 	{
 		enum State { seeking, first, rest, finishing, }
@@ -1474,7 +1489,6 @@ struct DefaultVisitorImpl(
 		TreePath tree_path, path;
 		alias SizeType = double;
 		SizeType[2] position, deferred_change, destination;
-		Orientation orientation = Orientation.Vertical;
 
 		@property
 		{
@@ -1513,15 +1527,9 @@ struct MeasureVisitor
 	NullVisitor null_visitor;
 	alias null_visitor this;
 
-	double[2] size;
-	import aux.model : Orientation;
-	Orientation orientation;
-
-	this(float width, float height) @nogc
+	this(float width, float height, Orientation orientation) @nogc
 	{
-		size[0] = width;
-		size[1] = height;
-		orientation = Orientation.Vertical;
+		null_visitor = NullVisitor(width, height, orientation);
 	}
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
@@ -1566,7 +1574,7 @@ unittest
 
 	auto data = [0, 1, 2, 3];
 	auto model = makeModel(data);
-	auto visitor = MeasureVisitor(120, 9);
+	auto visitor = MeasureVisitor(120, 9, Orientation.Vertical);
 
 	model.collapsed = false;
 	model.visitForward(data, visitor);
