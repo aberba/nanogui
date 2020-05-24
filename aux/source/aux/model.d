@@ -945,6 +945,7 @@ struct ScalarModel(alias A)
 			const delta = (Sinking) ? local_size : -local_size;
 import std;
 writefln("[leaf ] pos: %s, deferred: %s orient: %s delta: %s", visitor.position, visitor.deferred_change, local_orientation, delta);
+			deferred_change = 0;
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
@@ -1037,6 +1038,7 @@ mixin template visitImpl()
 				visitor.position[] += visitor.deferred_change[];
 import std;
 writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+				visitor.deferred_change = 0;
 			}
 		}
 
@@ -1077,6 +1079,7 @@ writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientatio
 					visitor.position[] += visitor.deferred_change[];
 import std;
 writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					visitor.deferred_change = 0;
 				}
 			}
 
