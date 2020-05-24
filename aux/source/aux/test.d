@@ -1498,6 +1498,26 @@ unittest
 	{
 		string label;
 		double size;
+
+		bool opEquals(ref const(typeof(this)) other) const
+		{
+			return opCmp(other) == 0;
+		}
+
+		int opCmp(ref const(typeof(this)) other) const
+		{
+			import std.math : approxEqual;
+
+			if (label < other.label)
+				return -1;
+			if (label > other.label)
+				return +1;
+			if (size.approxEqual(other.size))
+				return 0;
+			if (size < other.size)
+				return -1;
+			return 1;
+		}
 	}
 
 	static struct PositionState
@@ -1690,9 +1710,9 @@ unittest
 
 		mv.output_size[].should.be == [
 			SizeState("enterNode   AggregateModel!(H) ", 121), 
-			SizeState("processLeaf ScalarModel!(a) ",    121), 
-			SizeState("processLeaf ScalarModel!(b) ",    121), 
-			SizeState("leaveNode   AggregateModel!(H) ", 363)
+			SizeState("processLeaf ScalarModel!(a) ",    60.5), 
+			SizeState("processLeaf ScalarModel!(b) ",    60.5), 
+			SizeState("leaveNode   AggregateModel!(H) ", 121)
 		];
 
 		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
@@ -1700,10 +1720,10 @@ unittest
 		model.visitForward(data, rv);
 
 		rv.output_position[].should.be == [
-			PositionState("enterNode   AggregateModel!(H) ", [  0, 0]), 
-			PositionState("processLeaf ScalarModel!(a) ",    [121, 0]), 
-			PositionState("processLeaf ScalarModel!(b) ",    [242, 0]), 
-			PositionState("leaveNode   AggregateModel!(H) ", [242, 0])
+			PositionState("enterNode   AggregateModel!(H) ", [ 0.0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",    [ 0.0, 0]), 
+			PositionState("processLeaf ScalarModel!(b) ",    [60.5, 0]), 
+			PositionState("leaveNode   AggregateModel!(H) ", [60.5, 0])
 		];
 	}
 	{
@@ -1760,14 +1780,14 @@ unittest
 		];
 
 		mv.output_size[].should.be == [
-			SizeState("enterNode   AggregateModel!(VH) ", 10), 
-			SizeState("processLeaf ScalarModel!(a) ",     10), 
-			SizeState("enterNode   AggregateModel!(h) ",  121), 
-			SizeState("processLeaf ScalarModel!(a) ",     121), 
-			SizeState("processLeaf ScalarModel!(b) ",     121), 
-			SizeState("leaveNode   AggregateModel!(h) ",  363), 
-			SizeState("processLeaf ScalarModel!(b) ",     10), 
-			SizeState("leaveNode   AggregateModel!(VH) ", 40),
+			SizeState("enterNode   AggregateModel!(VH) ", 10.0), 
+			SizeState("processLeaf ScalarModel!(a) ",     10.0), 
+			SizeState("enterNode   AggregateModel!(h) ", 121.0), 
+			SizeState("processLeaf ScalarModel!(a) ",     60.5), 
+			SizeState("processLeaf ScalarModel!(b) ",     60.5), 
+			SizeState("leaveNode   AggregateModel!(h) ", 121.0), 
+			SizeState("processLeaf ScalarModel!(b) ",     10.0), 
+			SizeState("leaveNode   AggregateModel!(VH) ", 40.0),
 		];
 
 		rv = RenderVisitor(120, 9, Orientation.Vertical);
@@ -1775,14 +1795,14 @@ unittest
 		model.visitForward(data, rv);
 
 		rv.output_position[].should.be == [
-			PositionState("enterNode   AggregateModel!(VH) ", [  0, 0]), 
-			PositionState("processLeaf ScalarModel!(a) ",     [  0, 10]), 
-			PositionState("enterNode   AggregateModel!(h) ",  [  0, 20]), 
-			PositionState("processLeaf ScalarModel!(a) ",     [121, 20]), 
-			PositionState("processLeaf ScalarModel!(b) ",     [242, 20]), 
-			PositionState("leaveNode   AggregateModel!(h) ",  [242, 20]), 
-			PositionState("processLeaf ScalarModel!(b) ",     [  0, 30]), 
-			PositionState("leaveNode   AggregateModel!(VH) ", [  0, 30]),
+			PositionState("enterNode   AggregateModel!(VH) ", [ 0.0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [ 0.0, 10]), 
+			PositionState("enterNode   AggregateModel!(h) ",  [ 0.0, 20]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [ 0.0, 20]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [60.5, 20]), 
+			PositionState("leaveNode   AggregateModel!(h) ",  [60.5, 20]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [ 0.0, 30]), 
+			PositionState("leaveNode   AggregateModel!(VH) ", [ 0.0, 30]),
 		];
 	}
 	{
@@ -1803,11 +1823,11 @@ unittest
 
 		mv.output_size[].should.be == [
 			SizeState("enterNode   AggregateModel!(HV) ", 121), 
-			SizeState("processLeaf ScalarModel!(a) ",     121), 
+			SizeState("processLeaf ScalarModel!(a) ",     40.3333), 
 			SizeState("enterNode   AggregateModel!(v) ",  10), 
 			SizeState("leaveNode   AggregateModel!(v) ",  10), 
-			SizeState("processLeaf ScalarModel!(b) ",     121), 
-			SizeState("leaveNode   AggregateModel!(HV) ", 484),
+			SizeState("processLeaf ScalarModel!(b) ",     40.3333), 
+			SizeState("leaveNode   AggregateModel!(HV) ", 121),
 		];
 
 		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
@@ -1842,13 +1862,13 @@ unittest
 
 		mv.output_size[].should.be == [
 			SizeState("enterNode   AggregateModel!(HV) ", 121), 
-			SizeState("processLeaf ScalarModel!(a) ",     121), 
+			SizeState("processLeaf ScalarModel!(a) ",     40.333), 
 			SizeState("enterNode   AggregateModel!(v) ",  10), 
 			SizeState("processLeaf ScalarModel!(a) ",     10), 
 			SizeState("processLeaf ScalarModel!(b) ",     10), 
 			SizeState("leaveNode   AggregateModel!(v) ",  30), 
-			SizeState("processLeaf ScalarModel!(b) ",     121), 
-			SizeState("leaveNode   AggregateModel!(HV) ", 484),
+			SizeState("processLeaf ScalarModel!(b) ",     40.333), 
+			SizeState("leaveNode   AggregateModel!(HV) ", 121),
 		];
 	}
 	{
@@ -1861,9 +1881,9 @@ unittest
 		model.visitForward(data, mv);
 
 		/*
-		HVHV HVHV.l HVHV.hv HVHV.hv.l HVHV.hv.v    HVHV.hv.ch HVHV.ch
-		                              HVHV.hv.v.l
-		                              HVHV.hv.v.ch
+		HVHV HVHV.a HVHV.hv HVHV.hv.a HVHV.hv.v    HVHV.hv.b HVHV.b
+		                              HVHV.hv.v.a
+		                              HVHV.hv.v.b
 		*/
 		mv.output_orientation[].should.be == [
 			OrientationState("enterNode   AggregateModel!(HVHV) ", Orientation.Horizontal), 
@@ -1880,44 +1900,34 @@ unittest
 			OrientationState("leaveNode   AggregateModel!(HVHV) ", Orientation.Horizontal),
 		];
 
+		/*
+
+		<-HVHV: 121 ----------------------------------------------------------------------------------------------->
+		<-HVHV.a: 40.3333-><-HVHV.hv: 40.333------------------------------------------------><-- HVHV.b: 40.3333 --> // 40.3333 = 121/3.0
+		                   <-HVHV.hv.a: 13.4444-><-HVHV.hv.v: 13.4444-><-HVHV.hv.b: 13.4444->                        // 13.4444 = 40.3333/3.0
+		                                         /\                  /\
+		                                         || HVHV.hv.v: 10    ||
+		                                         \/                  ||
+		                                         /\                  ||
+		                                         || HVHV.hv.a: 10    || 30
+		                                         \/                  ||
+		                                         /\                  ||
+		                                         || HVHV.hv.a: 10    ||
+		                                         \/                  \/
+		*/
 		mv.output_size[].should.be == [
 			SizeState("enterNode   AggregateModel!(HVHV) ", 121), 
-			SizeState("processLeaf ScalarModel!(a) ",       121), 
-			SizeState("enterNode   AggregateModel!(hv) ",   121), 
-			SizeState("processLeaf ScalarModel!(a) ",       121), 
+			SizeState("processLeaf ScalarModel!(a) ",       40.3333), 
+			SizeState("enterNode   AggregateModel!(hv) ",   40.3333), 
+			SizeState("processLeaf ScalarModel!(a) ",       13.4444), 
 			SizeState("enterNode   AggregateModel!(v) ",    10), 
 			SizeState("processLeaf ScalarModel!(a) ",       10), 
 			SizeState("processLeaf ScalarModel!(b) ",       10), 
 			SizeState("leaveNode   AggregateModel!(v) ",    30), 
-			SizeState("processLeaf ScalarModel!(b) ",       121), 
-			SizeState("leaveNode   AggregateModel!(hv) ",   484), 
-			SizeState("processLeaf ScalarModel!(b) ",       121), 
-			SizeState("leaveNode   AggregateModel!(HVHV) ", 847),
+			SizeState("processLeaf ScalarModel!(b) ",       13.4444), 
+			SizeState("leaveNode   AggregateModel!(hv) ",   40.3333), 
+			SizeState("processLeaf ScalarModel!(b) ",       40.3333), 
+			SizeState("leaveNode   AggregateModel!(HVHV) ", 121),
 		];
 	}
-}
-
-version(unittest) @Name("new_paradigm")
-unittest
-{
-	static struct TrivialStruct
-	{
-		int i;
-		float f;
-	}
-
-	static struct StructNullable
-	{
-		import std.typecons : Nullable;
-		int i;
-		Nullable!float f;
-	}
-
-	auto d = StructNullable();
-	auto m = makeModel(d);
-	m.collapsed = false;
-	auto visitor = DefaultVisitor();
-	m.visitForward(d, visitor);
-	import std;
-	writeln(m);
 }

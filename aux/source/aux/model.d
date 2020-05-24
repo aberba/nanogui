@@ -1057,8 +1057,9 @@ writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
+				assert(this.orientation == visitor.orientation);
 				// (+) deferred_change setup (sinking)
-				visitor.deferred_change[orientation] = header_size;
+				visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? header_size : 0;
 import std;
 writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientation, this.size);
 				with(visitor) if (pos+deferred_change[this.orientation] > dest)
@@ -1105,7 +1106,7 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 				if (state.among(State.first, State.rest))
 				{
 					// (+) deferred_change setup (bubbling)
-					deferred_change[this.orientation] = -this.header_size;
+					visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? -this.header_size : 0;
 					deferred_change[this.orientation.nextAxis] = 0;
 					if (pos <= dest)
 					{
@@ -1582,6 +1583,7 @@ struct MeasureVisitor
 
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
+		assert(model.orientation == this.orientation);
 		model.size = model.header_size = size[model.orientation] + model.Spacing;
 import std;
 debug writeln(Model.stringof, "\n\torientation: ", orientation, " model.orientation: ", model.orientation, 
