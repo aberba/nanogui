@@ -1500,7 +1500,13 @@ unittest
 		double size;
 	}
 
-	struct MeasureVisitor2
+	static struct PositionState
+	{
+		string label;
+		double[2] pos;
+	}
+
+	static struct MeasureVisitor2
 	{
 		MeasureVisitor mvisitor;
 		alias mvisitor this;
@@ -1537,6 +1543,42 @@ unittest
 			mvisitor.processLeaf!order(data, model);
 
 			output_size.put(SizeState("processLeaf " ~ Model.stringof ~ " ", model.size));
+		}
+	}
+
+	static struct RenderVisitor
+	{
+		TreePathVisitor tpvisitor;
+		alias tpvisitor this;
+
+		Vector!(PositionState, Mallocator) output_position;
+
+		@disable this();
+
+		this(float width, float height, Orientation orientation)
+		{
+			tpvisitor = TreePathVisitor(width, height, orientation);
+		}
+
+		void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			tpvisitor.enterNode!order(data, model);
+
+			output_position.put(PositionState("enterNode   " ~ Model.stringof ~ " ", position));
+		}
+
+		void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			tpvisitor.leaveNode!order(data, model);
+
+			output_position.put(PositionState("leaveNode   " ~ Model.stringof ~ " ", position));
+		}
+
+		void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+		{
+			tpvisitor.processLeaf!order(data, model);
+
+			output_position.put(PositionState("processLeaf " ~ Model.stringof ~ " ", position));
 		}
 	}
 
@@ -1620,6 +1662,17 @@ unittest
 			SizeState("processLeaf ScalarModel!(b) ",    10), 
 			SizeState("leaveNode   AggregateModel!(V) ", 30)
 		];
+
+		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		model.visitForward(data, rv);
+
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(V) ", [0,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",    [0, 10]), 
+			PositionState("processLeaf ScalarModel!(b) ",    [0, 20]), 
+			PositionState("leaveNode   AggregateModel!(V) ", [0, 20])
+		];
 	}
 	{
 		const data = H(1, 'z');
@@ -1640,6 +1693,17 @@ unittest
 			SizeState("processLeaf ScalarModel!(a) ",    121), 
 			SizeState("processLeaf ScalarModel!(b) ",    121), 
 			SizeState("leaveNode   AggregateModel!(H) ", 363)
+		];
+
+		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		model.visitForward(data, rv);
+
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(H) ", [  0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",    [121, 0]), 
+			PositionState("processLeaf ScalarModel!(b) ",    [242, 0]), 
+			PositionState("leaveNode   AggregateModel!(H) ", [242, 0])
 		];
 	}
 	{
@@ -1667,6 +1731,19 @@ unittest
 			SizeState("leaveNode   AggregateModel!(VH) ",  40),
 		];
 
+		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		model.visitForward(data, rv);
+
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(VH) ", [0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [0, 10]), 
+			PositionState("enterNode   AggregateModel!(h) ",  [0, 20]), 
+			PositionState("leaveNode   AggregateModel!(h) ",  [0, 20]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [0, 30]), 
+			PositionState("leaveNode   AggregateModel!(VH) ", [0, 30]),
+		];
+
 		mv = MeasureVisitor2(120, 9);
 		model.h.collapsed = false;
 		model.visitForward(data, mv);
@@ -1691,6 +1768,21 @@ unittest
 			SizeState("leaveNode   AggregateModel!(h) ",  363), 
 			SizeState("processLeaf ScalarModel!(b) ",     10), 
 			SizeState("leaveNode   AggregateModel!(VH) ", 40),
+		];
+
+		rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		model.visitForward(data, rv);
+
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(VH) ", [  0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [  0, 10]), 
+			PositionState("enterNode   AggregateModel!(h) ",  [  0, 20]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [121, 20]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [242, 20]), 
+			PositionState("leaveNode   AggregateModel!(h) ",  [242, 20]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [  0, 30]), 
+			PositionState("leaveNode   AggregateModel!(VH) ", [  0, 30]),
 		];
 	}
 	{
