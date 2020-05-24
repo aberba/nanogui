@@ -1082,13 +1082,13 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 
 			visitor.leaveNode!order(data, this);
 
+			// restore parent orientation
 			visitor.orientation = old_orientation;
 
 			static if (hasTreePath && is(typeof(this.orientation)))
 			{
 				// (+) deferred_change setup (caret return)
-				// Text direction is left right top down,
-				// so reset x position
+				// Currently main axis is top down, so reset x position
 				if (Orientation.Horizontal == this.orientation  && 
 				    Orientation.Vertical   == visitor.orientation)
 					visitor.deferred_change[Orientation.Horizontal] = 0;
