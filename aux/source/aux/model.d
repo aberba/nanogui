@@ -1094,7 +1094,10 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 				// Currently main axis is top down, so reset x position
 				if (Orientation.Horizontal == this.orientation  && 
 				    Orientation.Vertical   == visitor.orientation)
-					visitor.deferred_change[Orientation.Horizontal] = 0;
+				{
+					visitor.deferred_change = [0, visitor.size[Orientation.Vertical] + this.Spacing];
+					visitor.position[0] = 0;
+				}
 			}
 
 			static if (hasTreePath && Bubbling) with(visitor)
