@@ -945,7 +945,6 @@ struct ScalarModel(alias A)
 			const delta = (Sinking) ? local_size : -local_size;
 import std;
 writefln("[leaf ] pos: %s, deferred: %s orient: %s delta: %s", visitor.position, visitor.deferred_change, local_orientation, delta);
-
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
@@ -1101,6 +1100,7 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 				{
 					// (+) deferred_change setup (bubbling)
 					deferred_change[this.orientation] = -this.header_size;
+					deferred_change[this.orientation.nextAxis] = 0;
 					if (pos <= dest)
 					{
 						state = State.finishing;
