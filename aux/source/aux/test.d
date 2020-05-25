@@ -1873,13 +1873,17 @@ unittest
 		model.visitForward(data, rv);
 		debug logger.trace("--------------------------------------------");
 
+		/*
+		<---------------------HV: 121-------------------->
+		<-HV.a: 40.3333-><-HV.v: 40.333-><-HV.b: 40.3333-> // 40.3333 = 121/3.0
+		*/
 		rv.output_position[].should.be == [
 			PositionState("enterNode   AggregateModel!(HV) ", [ 0, 0]), 
 			PositionState("processLeaf ScalarModel!(a) ",     [ 0, 0]), 
 			PositionState("enterNode   AggregateModel!(v) ",  [40.3333, 0]), 
 			PositionState("leaveNode   AggregateModel!(v) ",  [40.3333, 0]), 
-			PositionState("processLeaf ScalarModel!(b) ",     [80.6667, 10]), 
-			PositionState("leaveNode   AggregateModel!(HV) ", [80.6667, 10]),
+			PositionState("processLeaf ScalarModel!(b) ",     [80.6667, 0]), 
+			PositionState("leaveNode   AggregateModel!(HV) ", [80.6667, 0]),
 		];
 
 		model.size.should.be == 121;

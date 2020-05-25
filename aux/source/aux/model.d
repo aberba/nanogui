@@ -1057,6 +1057,20 @@ mixin template visitImpl()
 			}
 		}
 
+		// store current position to restore it if the orientation
+		// changes
+		static if (hasTreePath && is(typeof(this.orientation)))
+		{
+			typeof(visitor.position[0]) old_position;
+
+			if (this.orientation != visitor.orientation)
+			{
+				old_position = (this.orientation == Orientation.Horizontal) ?
+					visitor.position[0] : visitor.position[1];
+				debug logger.tracef("[before enterNode ] old position: %s %s", old_position, this.orientation);
+			}
+		}
+
 		auto old_orientation = visitor.orientation;
 		visitor.orientation = this.orientation;
 
@@ -1102,15 +1116,26 @@ mixin template visitImpl()
 			// restore parent orientation
 			visitor.orientation = old_orientation;
 
+			// restore visitor position because the orientation changed
 			static if (hasTreePath && is(typeof(this.orientation)))
 			{
 				// (+) deferred_change setup (caret return)
-				// Currently main axis is top down, so reset x position
-				if (Orientation.Horizontal == this.orientation  && 
-				    Orientation.Vertical   == visitor.orientation)
+				if (this.orientation != visitor.orientation)
 				{
-					visitor.deferred_change = [0, visitor.size[Orientation.Vertical] + this.Spacing];
-					visitor.position[0] = 0;
+					import std.math : isNaN;
+					assert(!old_position.isNaN);
+
+					if (this.orientation == Orientation.Horizontal)
+					{
+						visitor.deferred_change = [0, visitor.size[Orientation.Vertical] + this.Spacing];
+						visitor.position[0] = old_position;
+					}
+					else
+					{
+						visitor.deferred_change[1] = 0;
+						visitor.position[1] = old_position;
+					}
+					debug logger.tracef(" [after leaveNode ] pos: %s model: %s, visitor: %s", visitor.position, this.orientation, visitor.orientation);
 				}
 			}
 
