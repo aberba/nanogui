@@ -1713,7 +1713,9 @@ unittest
 
 		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
 		rv.position = 0;
+		debug logger.trace("------ RenderVisitor V ---------------------");
 		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
 
 		rv.output_position[].should.be == [
 			PositionState("enterNode   AggregateModel!(V) ", [0,  0]), 

@@ -15,3 +15,4 @@ aux-test-*
 *.lst
 *.selections.json
 /ut
+/log.txt

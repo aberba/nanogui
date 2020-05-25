@@ -930,6 +930,9 @@ struct ScalarModel(alias A)
 				}
 			}
 		}
+
+		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
+
 		if (visitor.complete)
 		{
 			return true;
@@ -938,20 +941,21 @@ struct ScalarModel(alias A)
 		static if (hasTreePath) with(visitor) 
 		{
 			// (+) position change (leaf)
+			debug logger.tracef("     [before leaf ] position (*) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			position[] += deferred_change[];
 			const local_orientation = visitor.orientation;
 			const local_size = (this.orientation == Orientation.Horizontal) ? this.size : visitor.size[Orientation.Vertical];
 			// (+) deferred_change setup (leaf)
 			const delta = (Sinking) ? local_size : -local_size;
-import std;
-writefln("[leaf ] pos: %s, deferred: %s orient: %s delta: %s", visitor.position, visitor.deferred_change, local_orientation, delta);
 			deferred_change = 0;
+			debug logger.tracef("     [ after leaf ] state: %s orientation: %s", visitor.state, local_orientation);
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
 				{
 					visitor.processLeaf!order(data, this);
 					deferred_change[local_orientation] = delta;
+					debug logger.tracef("     [ after leaf ] deferred (S) dfr: %s", visitor.deferred_change);
 				}
 				if ((Sinking  && pos+deferred_change[local_orientation] > dest) ||
 					(Bubbling && pos                                   < dest))
@@ -963,13 +967,22 @@ writefln("[leaf ] pos: %s, deferred: %s orient: %s delta: %s", visitor.position,
 				{
 					visitor.processLeaf!order(data, this);
 					deferred_change[local_orientation] = delta;
+					debug logger.tracef("     [ after leaf ] deferred (B) dfr: %s", visitor.deferred_change);
 				}
 			}
 			else
+			{
 				deferred_change[local_orientation] = delta;
+				debug logger.tracef("     [ after leaf ] deferred (*) dfr: %s", visitor.deferred_change);
+			}
 		}
 		else
+		{
+			debug logger.tracef("                    processLeaf", typeof(this).stringof);
 			visitor.processLeaf!order(data, this);
+		}
+
+		debug logger.tracef("     [after  leaf ] %s", typeof(this).stringof);
 
 		return false;
 	}
@@ -1025,6 +1038,9 @@ mixin template visitImpl()
 				}
 			}
 		}
+
+		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
+
 		if (visitor.complete)
 		{
 			return true;
@@ -1036,9 +1052,8 @@ mixin template visitImpl()
 			{
 				// (+) position change (sinking)
 				visitor.position[] += visitor.deferred_change[];
-import std;
-writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
-				visitor.deferred_change = 0;
+				visitor.deferred_change[1] = 0; // do not reset horizontal
+				debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			}
 		}
 
@@ -1060,8 +1075,7 @@ writefln("[enter] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 				assert(this.orientation == visitor.orientation);
 				// (+) deferred_change setup (sinking)
 				visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? header_size : 0;
-import std;
-writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientation, this.size);
+				debug logger.tracef("[ after enterNode ] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
 				with(visitor) if (pos+deferred_change[this.orientation] > dest)
 				{
 					state = State.finishing;
@@ -1078,8 +1092,7 @@ writefln("[enter ] deferred: %s %s %s", visitor.deferred_change, this.orientatio
 				{
 					// (+) position change (bubbling)
 					visitor.position[] += visitor.deferred_change[];
-import std;
-writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 					visitor.deferred_change = 0;
 				}
 			}
@@ -1115,6 +1128,8 @@ writefln("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_cha
 					}
 				}
 			}
+
+			debug logger.tracef(" [after leaveNode ]");
 		}
 
 		if (!this.collapsed)
@@ -1514,6 +1529,79 @@ alias NullVisitor      = DefaultVisitorImpl!(TreePathEnabled.no );
 alias TreePathVisitor  = DefaultVisitorImpl!(TreePathEnabled.yes);
 alias DefaultVisitor   = DefaultVisitorImpl!(TreePathEnabled.yes);
 
+import std.stdio : File;
+import std.experimental.logger : FileLogger;
+
+class AuxLogger : FileLogger
+{
+	this(string filename) @safe
+	{
+		super(filename);
+	}
+
+	this(ref File file) @safe
+	{
+		super(file);
+	}
+
+	import std.experimental.logger;
+	import std.concurrency;
+	import std.datetime;
+
+	override protected void beginLogMsg(string file, int line, string funcName,
+		string prettyFuncName, string moduleName, LogLevel logLevel,
+		Tid threadId, SysTime timestamp, Logger logger)
+		@safe
+	{
+		// do nothing
+	}
+}
+
+package
+{
+	__gshared File file;
+	__gshared AuxLogger logger;
+}
+
+shared static this()
+{
+	assert(logger is null);
+	file = File("log.txt", "w");
+	logger = new AuxLogger(file);
+}
+
+shared static ~this()
+{
+	assert(logger !is null);
+	destroy(logger);
+	file.close;
+}
+
+struct Size
+{
+	double[2] value;
+
+	void opAssign(double[2] rhs)
+	{
+		value = rhs;
+	}
+
+	void opAssign(typeof(this) rhs) @safe @nogc
+	{
+		value = rhs.value;
+	}
+
+	double opIndex(size_t i) @safe @nogc const
+	{
+		return value[i];
+	}
+
+	void opIndexAssign(double v, size_t i) @safe @nogc
+	{
+		value[i] = v;
+	}
+}
+
 /// Default implementation of Visitor
 struct DefaultVisitorImpl(
 	TreePathEnabled _tree_path_,
@@ -1585,14 +1673,6 @@ struct MeasureVisitor
 	{
 		assert(model.orientation == this.orientation);
 		model.size = model.header_size = size[model.orientation] + model.Spacing;
-import std;
-debug writeln(Model.stringof, "\n\torientation: ", orientation, " model.orientation: ", model.orientation, 
-	"\n\tsize: ", size, " model.size: ", model.size);
-		auto next_axis = ((model.orientation+1) % 2);
-		double[2] local_size;
-		local_size[model.orientation] = model.size;
-		local_size[next_axis] = size[next_axis];
-debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 	}
 
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
@@ -1600,21 +1680,11 @@ debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 		assert(this.orientation == model.orientation);
 		if (model.orientation == Orientation.Vertical)
 			model.size += model.childrenSize(size);
-import std;
-debug writeln(Model.stringof, " leave", "\n\tmodel.size: ", model.size, " childrenSize: ", model.childrenSize(size));
 	}
 
 	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
 		model.size = size[orientation] + model.Spacing;
-import std;
-debug writeln(Model.stringof, "\n\torientation: ", orientation, " this.orientation: ", this.orientation, 
-	"\n\tsize: ", size, " model.size: ", model.size);
-		auto next_axis = ((this.orientation+1) % 2);
-		double[2] local_size;
-		local_size[this.orientation] = model.size;
-		local_size[next_axis] = size[next_axis];
-debug writefln("\tlocal size: %sx%s", local_size[0], local_size[1]);
 	}
 }
 
