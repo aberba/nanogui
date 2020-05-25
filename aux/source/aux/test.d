@@ -1869,18 +1869,20 @@ unittest
 
 		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
 		rv.position = 0;
+		debug logger.trace("------ RenderVisitor HV --------------------");
 		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
 
-		// rv.output_position[].should.be == [
-		// 	PositionState("enterNode   AggregateModel!(HV) ", [  0, 0]), 
-		// 	PositionState("processLeaf ScalarModel!(a) ",     [121, 0]), 
-		// 	PositionState("enterNode   AggregateModel!(v) ",  [242, 0]), 
-		// 	PositionState("leaveNode   AggregateModel!(v) ",  [242, 0]), 
-		// 	PositionState("processLeaf ScalarModel!(b) ",     [242, 10]), 
-		// 	PositionState("leaveNode   AggregateModel!(HV) ", [242, 10]),
-		// ];
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(HV) ", [ 0, 0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [ 0, 0]), 
+			PositionState("enterNode   AggregateModel!(v) ",  [40.3333, 0]), 
+			PositionState("leaveNode   AggregateModel!(v) ",  [40.3333, 0]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [80.6667, 10]), 
+			PositionState("leaveNode   AggregateModel!(HV) ", [80.6667, 10]),
+		];
 
-		// model.size.should.be == 121;
+		model.size.should.be == 121;
 
 		mv = MeasureVisitor2(120, 9);
 		model.v.collapsed = false;
