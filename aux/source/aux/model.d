@@ -1020,6 +1020,10 @@ mixin template visitImpl()
 
 		static if (hasTreePath)
 		{
+			import std.math : isNaN;
+			assert(!visitor.position[0].isNaN);
+			assert(!visitor.position[1].isNaN);
+
 			with(visitor) final switch(state)
 			{
 				case State.seeking:
@@ -1310,6 +1314,7 @@ private enum PropertyKind { setter, getter }
 auto setPropertyByTreePath(string propertyName, Value, Data, Model)(auto ref Data data, ref Model model, int[] path, Value value)
 {
 	auto pv = PropertyVisitor!(propertyName, Value)();
+	pv.position = 0;
 	pv.path.value = path;
 	pv.value = value;
 	pv.propertyKind = PropertyKind.setter;
@@ -1319,6 +1324,7 @@ auto setPropertyByTreePath(string propertyName, Value, Data, Model)(auto ref Dat
 auto getPropertyByTreePath(string propertyName, Value, Data, Model)(auto ref Data data, ref Model model, int[] path)
 {
 	auto pv = PropertyVisitor!(propertyName, Value)();
+	pv.position = 0;
 	pv.path.value = path;
 	pv.propertyKind = PropertyKind.getter;
 	model.visitForward(data, pv);
