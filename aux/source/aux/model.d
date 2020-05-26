@@ -1403,10 +1403,12 @@ private struct TwoFacedRange(Order order)
 
 	size_t length() const
 	{
+		if (empty)
+			return 0;
 		static if (order == Order.Sinking)
 			return l - s;
 		else static if (order == Order.Bubbling)
-			return s;
+			return s+1;
 		else
 			static assert(0);
 	}
