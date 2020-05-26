@@ -1828,7 +1828,9 @@ unittest
 
 		rv = RenderVisitor(120, 9, Orientation.Vertical);
 		rv.position = 0;
+		debug logger.trace("------ RenderVisitor HV --------------------");
 		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
 
 		rv.output_position[].should.be == [
 			PositionState("enterNode   AggregateModel!(VH) ", [ 0.0000, 0]), 
@@ -1915,6 +1917,37 @@ unittest
 			SizeState("processLeaf ScalarModel!(b) ",     40.333), 
 			SizeState("leaveNode   AggregateModel!(HV) ", 121),
 		];
+
+		rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		debug logger.trace("------ RenderVisitor HV --------------------");
+		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
+
+		/*
+		<---------------------HV: 121-------------------->
+		<-HV.a: 40.3333-><-HV.v: 40.333-><-HV.b: 40.3333-> // 40.3333 = 121/3.0
+		                 /\               /\
+		                 || HV.v.a: 10    ||
+		                 \/               ||
+		                 /\               ||
+		                 || HV.v.b: 10    || 30
+		                 \/               ||
+		                 /\               ||
+		                 || HV.v.c: 10    ||
+		                 \/               \/
+		*/
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(HV) ", [ 0.0000,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [ 0.0000,  0]), 
+			PositionState("enterNode   AggregateModel!(v) ",  [40.3333,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",     [40.3333, 10]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [40.3333, 20]), 
+			PositionState("processLeaf ScalarModel!(c) ",     [40.3333, 30]), 
+			PositionState("leaveNode   AggregateModel!(v) ",  [40.3333, 30]), 
+			PositionState("processLeaf ScalarModel!(b) ",     [80.6667,  0]), 
+			PositionState("leaveNode   AggregateModel!(HV) ", [80.6667,  0]),
+		];
 	}
 	{
 		const data = HVHV(1, HV(2, V(3, 'x'), 'y'), 'z');
@@ -1946,21 +1979,6 @@ unittest
 			OrientationState("leaveNode   AggregateModel!(HVHV) ", Orientation.Horizontal),
 		];
 
-		/*
-
-		<-HVHV: 121 ----------------------------------------------------------------------------------------------->
-		<-HVHV.a: 40.3333-><-HVHV.hv: 40.333------------------------------------------------><-- HVHV.b: 40.3333 --> // 40.3333 = 121/3.0
-		                   <-HVHV.hv.a: 13.4444-><-HVHV.hv.v: 13.4444-><-HVHV.hv.b: 13.4444->                        // 13.4444 = 40.3333/3.0
-		                                         /\                  /\
-		                                         || HVHV.hv.v: 10    ||
-		                                         \/                  ||
-		                                         /\                  ||
-		                                         || HVHV.hv.a: 10    || 30
-		                                         \/                  ||
-		                                         /\                  ||
-		                                         || HVHV.hv.a: 10    ||
-		                                         \/                  \/
-		*/
 		mv.output_size[].should.be == [
 			SizeState("enterNode   AggregateModel!(HVHV) ", 121), 
 			SizeState("processLeaf ScalarModel!(a) ",       40.3333), 
@@ -1975,6 +1993,42 @@ unittest
 			SizeState("leaveNode   AggregateModel!(hv) ",   40.3333), 
 			SizeState("processLeaf ScalarModel!(b) ",       40.3333), 
 			SizeState("leaveNode   AggregateModel!(HVHV) ", 121),
+		];
+
+		auto rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = 0;
+		debug logger.trace("------ RenderVisitor HVHV ------------------");
+		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
+
+		/*
+		<-HVHV: 121 ----------------------------------------------------------------------------------------------->
+		<-HVHV.a: 40.3333-><-HVHV.hv: 40.3333-----------------------------------------------><-- HVHV.b: 40.3333 --> // 40.3333 = 121/3.0
+		                   <-HVHV.hv.a: 13.4444-><-HVHV.hv.v: 13.4444-><-HVHV.hv.b: 13.4444->                        // 13.4444 = 40.3333/3.0
+		                                         /\                  /\
+		                                         || HVHV.hv.v: 10    ||
+		                                         \/                  ||
+		                                         /\                  ||
+		                                         || HVHV.hv.a: 10    || 30
+		                                         \/                  ||
+		                                         /\                  ||
+		                                         || HVHV.hv.a: 10    ||
+		                                         \/                  \/
+		*/
+		rv.output_position[].should.be == [
+			PositionState("enterNode   AggregateModel!(HVHV) ", [  0.0000,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",       [  0.0000,  0]), 
+			PositionState("enterNode   AggregateModel!(hv) ",   [ 40.3333,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",       [ 40.3333,  0]), 
+			PositionState("enterNode   AggregateModel!(v) ",    [ 53.7778,  0]), 
+			PositionState("processLeaf ScalarModel!(a) ",       [ 53.7778, 10]), 
+			PositionState("processLeaf ScalarModel!(b) ",       [ 53.7778, 20]), 
+			PositionState("processLeaf ScalarModel!(c) ",       [ 53.7778, 30]), 
+			PositionState("leaveNode   AggregateModel!(v) ",    [ 53.7778, 30]), 
+			PositionState("processLeaf ScalarModel!(b) ",       [ 67.2223,  0]), 
+			PositionState("leaveNode   AggregateModel!(hv) ",   [ 67.2223,  0]), 
+			PositionState("processLeaf ScalarModel!(b) ",       [ 80.6667,  0]), 
+			PositionState("leaveNode   AggregateModel!(HVHV) ", [ 80.6667,  0]),
 		];
 	}
 }

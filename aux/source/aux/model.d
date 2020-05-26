@@ -1052,7 +1052,7 @@ mixin template visitImpl()
 			{
 				// (+) position change (sinking)
 				visitor.position[] += visitor.deferred_change[];
-				visitor.deferred_change[1] = 0; // do not reset horizontal
+				visitor.deferred_change[] = 0;
 				debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			}
 		}
@@ -1218,6 +1218,12 @@ mixin template visitImpl()
 				foreach(i; childIndices)
 				{
 					static if (hasTreePath) visitor.tree_path.back = i;
+					static if (hasTreePath)
+					{
+						const difference = (orientation != model[i].orientation);
+						const old = difference ? visitor.deferred_change[orientation] : double.nan;
+						scope(exit) if (difference) visitor.deferred_change[orientation] = old;
+					}
 					auto idx = getIndex!(Data)(this, i);
 					if (model[i].visit!order(data[idx], visitor))
 					{
@@ -1244,6 +1250,12 @@ mixin template visitImpl()
 							enum FieldNo = (Sinking) ? i : len - i - 1;
 							enum member = DrawableMembers!Data[FieldNo];
 							static if (hasTreePath) visitor.tree_path.back = cast(int) FieldNo;
+							static if (hasTreePath)
+							{
+								const difference = (orientation != mixin("this." ~ member).orientation);
+								const old = difference ? visitor.deferred_change[orientation] : double.nan;
+								scope(exit) if (difference) visitor.deferred_change[orientation] = old;
+							}
 							if (mixin("this." ~ member).visit!order(mixin("data." ~ member), visitor))
 							{
 								return true;
