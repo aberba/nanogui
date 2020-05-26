@@ -908,22 +908,22 @@ unittest
 	model.s.size.should.be == 18;
 
 	rv.output_position[].should.be == [
-		TreePosition([],     [  0,   0]),
-		TreePosition([0],    [  0,  18]),
-		TreePosition([1],    [  0,  36]),
-		TreePosition([2],    [  0,  54]),
-		TreePosition([3],    [  0,  72]), // foo1 has Horizontal orientation on account of its type attribute
-		TreePosition([3, 0], [121,  72]),
-		TreePosition([3, 1], [242,  72]),
-		TreePosition([4],    [  0,  90]), // foo2 has Vertical orientation due to its own (symbol) attribute
-		TreePosition([4, 0], [  0, 108]),
-		TreePosition([4, 1], [  0, 126]),
-		TreePosition([5],    [  0, 144]), // bar1 has Vertical orientation by default (defined by a visitor)
-		TreePosition([5, 0], [  0, 162]),
-		TreePosition([5, 1], [  0, 180]),
-		TreePosition([6],    [  0, 198]), // bar2 has Horizontal orientation because its own attribute
-		TreePosition([6, 0], [121, 198]),
-		TreePosition([6, 1], [242, 198]),
+		TreePosition([],     [  0.0,   0]),
+		TreePosition([0],    [  0.0,  18]),
+		TreePosition([1],    [  0.0,  36]),
+		TreePosition([2],    [  0.0,  54]),
+		TreePosition([3],    [  0.0,  72]), // foo1 has Horizontal orientation on account of its type attribute
+		TreePosition([3, 0], [  0.0,  72]),
+		TreePosition([3, 1], [ 60.5,  72]),
+		TreePosition([4],    [  0.0,  90]), // foo2 has Vertical orientation due to its own (symbol) attribute
+		TreePosition([4, 0], [  0.0, 108]),
+		TreePosition([4, 1], [  0.0, 126]),
+		TreePosition([5],    [  0.0, 144]), // bar1 has Vertical orientation by default (defined by a visitor)
+		TreePosition([5, 0], [  0.0, 162]),
+		TreePosition([5, 1], [  0.0, 180]),
+		TreePosition([6],    [  0.0, 198]), // bar2 has Horizontal orientation because its own attribute
+		TreePosition([6, 0], [  0.0, 198]),
+		TreePosition([6, 1], [ 60.5, 198]),
 	];
 }
 
