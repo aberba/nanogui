@@ -1063,19 +1063,12 @@ mixin template visitImpl()
 
 		// store current position to restore it if the orientation
 		// changes
-		static if (hasTreePath && is(typeof(this.orientation)))
+		static if (hasTreePath)
 		{
-			typeof(visitor.position[0]) old_position;
-
-			if (this.orientation != visitor.orientation)
-			{
-				old_position = (this.orientation == Orientation.Horizontal) ?
-					visitor.position[0] : visitor.position[1];
-				debug logger.tracef("[before enterNode ] old position: %s %s", old_position, this.orientation);
-			}
+			const old_position = visitor.position[orientation];
 		}
 
-		auto old_orientation = visitor.orientation;
+		const old_orientation = visitor.orientation;
 		visitor.orientation = this.orientation;
 
 		static if (hasTreePath)
@@ -1121,24 +1114,18 @@ mixin template visitImpl()
 			visitor.orientation = old_orientation;
 
 			// restore visitor position because the orientation changed
-			static if (hasTreePath && is(typeof(this.orientation)))
+			static if (hasTreePath)
 			{
 				// (+) deferred_change setup (caret return)
 				if (this.orientation != visitor.orientation)
 				{
-					import std.math : isNaN;
 					assert(!old_position.isNaN);
 
 					if (this.orientation == Orientation.Horizontal)
-					{
 						visitor.deferred_change = [0, visitor.size[Orientation.Vertical] + this.Spacing];
-						visitor.position[0] = old_position;
-					}
 					else
-					{
-						visitor.deferred_change[1] = 0;
-						visitor.position[1] = old_position;
-					}
+						visitor.deferred_change[] = 0;
+					visitor.position[orientation] = old_position;
 					debug logger.tracef(" [after leaveNode ] pos: %s model: %s, visitor: %s", visitor.position, this.orientation, visitor.orientation);
 				}
 			}
@@ -1224,9 +1211,11 @@ mixin template visitImpl()
 					static if (hasTreePath) visitor.tree_path.back = i;
 					static if (hasTreePath)
 					{
-						const difference = (orientation != model[i].orientation);
-						const old = difference ? visitor.deferred_change[orientation] : double.nan;
-						scope(exit) if (difference) visitor.deferred_change[orientation] = old;
+						const orientation_changed = (orientation != model[i].orientation);
+						const old = visitor.deferred_change[orientation];
+						// if orientation changed restore deferred_change to continue moving in previous
+						// direction
+						scope(exit) if (orientation_changed) visitor.deferred_change[orientation] = old;
 					}
 					auto idx = getIndex!(Data)(this, i);
 					if (model[i].visit!order(data[idx], visitor))
@@ -1256,9 +1245,11 @@ mixin template visitImpl()
 							static if (hasTreePath) visitor.tree_path.back = cast(int) FieldNo;
 							static if (hasTreePath)
 							{
-								const difference = (orientation != mixin("this." ~ member).orientation);
-								const old = difference ? visitor.deferred_change[orientation] : double.nan;
-								scope(exit) if (difference) visitor.deferred_change[orientation] = old;
+								const orientation_changed = (orientation != mixin("this." ~ member).orientation);
+								const old = visitor.deferred_change[orientation];
+								// if orientation changed restore deferred_change to continue moving in previous
+								// direction
+								scope(exit) if (orientation_changed) visitor.deferred_change[orientation] = old;
 							}
 							if (mixin("this." ~ member).visit!order(mixin("data." ~ member), visitor))
 							{
