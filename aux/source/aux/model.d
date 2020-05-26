@@ -1209,7 +1209,7 @@ mixin template visitImpl()
 				foreach(i; childIndices)
 				{
 					static if (hasTreePath) visitor.tree_path.back = i;
-					static if (hasTreePath)
+					static if (hasTreePath) if (model[i].Collapsable)
 					{
 						const orientation_changed = (orientation != model[i].orientation);
 						const old = visitor.deferred_change[orientation];
@@ -1243,7 +1243,7 @@ mixin template visitImpl()
 							enum FieldNo = (Sinking) ? i : len - i - 1;
 							enum member = DrawableMembers!Data[FieldNo];
 							static if (hasTreePath) visitor.tree_path.back = cast(int) FieldNo;
-							static if (hasTreePath)
+							static if (hasTreePath && mixin("this." ~ member).Collapsable)
 							{
 								const orientation_changed = (orientation != mixin("this." ~ member).orientation);
 								const old = visitor.deferred_change[orientation];

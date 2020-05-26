@@ -1731,6 +1731,20 @@ unittest
 			PositionState("processLeaf ScalarModel!(c) ",    [2], [0, 30]), 
 			PositionState("leaveNode   AggregateModel!(V) ", [],  [0, 30])
 		];
+
+		rv = RenderVisitor(120, 9, Orientation.Vertical);
+		rv.position = [0, 50];
+		rv.path.value = [0];
+		debug logger.trace("------ RenderVisitor V ---------------------");
+		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
+
+		rv.output_position[].should.be == [
+			PositionState("processLeaf ScalarModel!(a) ",    [0], [0, 50]), 
+			PositionState("processLeaf ScalarModel!(b) ",    [1], [0, 60]), 
+			PositionState("processLeaf ScalarModel!(c) ",    [2], [0, 70]), 
+			PositionState("leaveNode   AggregateModel!(V) ", [],  [0, 70])
+		];
 	}
 	{
 		const data = H(1, 'z');
