@@ -1,164 +1,162 @@
 module aux.test_aggregate;
 
-version(unittest) import unit_threaded : Name;
+import unit_threaded : should, be, Name;
+import std.experimental.allocator.mallocator : Mallocator;
+import automem.vector : Vector;
+
+import aux.model : Order, Orientation, MeasureVisitor, makeModel,
+	TreePathVisitor, logger, visitForward;
 
 // this is initial attempt to separate tests to different files
+
+struct OrientationState
+{
+	string label;
+	Orientation orientation;
+}
+
+struct SizeState
+{
+	string label;
+	double size;
+
+	bool opEquals(ref const(typeof(this)) other) const
+	{
+		return opCmp(other) == 0;
+	}
+
+	int opCmp(ref const(typeof(this)) other) const
+	{
+		import std.math : approxEqual;
+
+		if (label < other.label)
+			return -1;
+		if (label > other.label)
+			return +1;
+		if (size.approxEqual(other.size))
+			return 0;
+		if (size < other.size)
+			return -1;
+		return 1;
+	}
+}
+
+struct PositionState
+{
+	string label;
+	int[] path;
+	double[2] pos;
+
+	bool opEquals(ref const(typeof(this)) other) const
+	{
+		return opCmp(other) == 0;
+	}
+
+	int opCmp(ref const(typeof(this)) other) const
+	{
+		import std.math : approxEqual;
+
+		if (label < other.label)
+			return -1;
+		if (label > other.label)
+			return +1;
+
+		if (path < other.path)
+			return -1;
+		if (path > other.path)
+			return +1;
+
+		if (pos[0].approxEqual(other.pos[0]) && pos[1].approxEqual(other.pos[1]))
+			return 0;
+		if (pos[0] < other.pos[0])
+			return -1;
+		if (pos[0] > other.pos[0])
+			return -+1;
+		if (pos[1] < other.pos[1])
+			return -1;
+		return 1;
+	}
+}
+
+struct MeasureVisitor2
+{
+	MeasureVisitor mvisitor;
+	alias mvisitor this;
+
+	Vector!(OrientationState, Mallocator) output_orientation;
+	Vector!(SizeState, Mallocator) output_size;
+
+	this(float width, float height) @nogc
+	{
+		mvisitor = MeasureVisitor(width, height, Orientation.Vertical);
+	}
+
+	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		output_orientation.put(OrientationState("enterNode   " ~ Model.stringof ~ " ", orientation));
+
+		mvisitor.enterNode!order(data, model);
+
+		output_size.put(SizeState("enterNode   " ~ Model.stringof ~ " ", model.size));
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		mvisitor.leaveNode!order(data, model);
+
+		output_size.put(SizeState("leaveNode   " ~ Model.stringof ~ " ", model.size));
+		output_orientation.put(OrientationState("leaveNode   " ~ Model.stringof ~ " ", orientation));
+	}
+
+	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		output_orientation.put(OrientationState("processLeaf " ~ Model.stringof ~ " ", orientation));
+
+		mvisitor.processLeaf!order(data, model);
+
+		output_size.put(SizeState("processLeaf " ~ Model.stringof ~ " ", model.size));
+	}
+}
+
+struct RenderVisitor
+{
+	TreePathVisitor tpvisitor;
+	alias tpvisitor this;
+
+	Vector!(PositionState, Mallocator) output_position;
+
+	@disable this();
+
+	this(float width, float height, Orientation orientation)
+	{
+		tpvisitor = TreePathVisitor(width, height, orientation);
+	}
+
+	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		tpvisitor.enterNode!order(data, model);
+
+		output_position.put(PositionState("enterNode   " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
+	}
+
+	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		tpvisitor.leaveNode!order(data, model);
+
+		output_position.put(PositionState("leaveNode   " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
+	}
+
+	void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
+	{
+		tpvisitor.processLeaf!order(data, model);
+
+		output_position.put(PositionState("processLeaf " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
+	}
+}
 
 version(unittest) @Name("aggregate+orientation")
 unittest
 {
-	import unit_threaded : should, be;
-	import std.experimental.allocator.mallocator : Mallocator;
-	import automem.vector : Vector;
-
-	import aux.model : Order, Orientation, MeasureVisitor, makeModel,
-		TreePathVisitor, logger, visitForward;
-
-	static struct OrientationState
-	{
-		string label;
-		Orientation orientation;
-	}
-
-	static struct SizeState
-	{
-		string label;
-		double size;
-
-		bool opEquals(ref const(typeof(this)) other) const
-		{
-			return opCmp(other) == 0;
-		}
-
-		int opCmp(ref const(typeof(this)) other) const
-		{
-			import std.math : approxEqual;
-
-			if (label < other.label)
-				return -1;
-			if (label > other.label)
-				return +1;
-			if (size.approxEqual(other.size))
-				return 0;
-			if (size < other.size)
-				return -1;
-			return 1;
-		}
-	}
-
-	static struct PositionState
-	{
-		string label;
-		int[] path;
-		double[2] pos;
-
-		bool opEquals(ref const(typeof(this)) other) const
-		{
-			return opCmp(other) == 0;
-		}
-
-		int opCmp(ref const(typeof(this)) other) const
-		{
-			import std.math : approxEqual;
-
-			if (label < other.label)
-				return -1;
-			if (label > other.label)
-				return +1;
-
-			if (path < other.path)
-				return -1;
-			if (path > other.path)
-				return +1;
-
-			if (pos[0].approxEqual(other.pos[0]) && pos[1].approxEqual(other.pos[1]))
-				return 0;
-			if (pos[0] < other.pos[0])
-				return -1;
-			if (pos[0] > other.pos[0])
-				return -+1;
-			if (pos[1] < other.pos[1])
-				return -1;
-			return 1;
-		}
-	}
-
-	static struct MeasureVisitor2
-	{
-		MeasureVisitor mvisitor;
-		alias mvisitor this;
-
-		Vector!(OrientationState, Mallocator) output_orientation;
-		Vector!(SizeState, Mallocator) output_size;
-
-		this(float width, float height) @nogc
-		{
-			mvisitor = MeasureVisitor(width, height, Orientation.Vertical);
-		}
-
-		void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			output_orientation.put(OrientationState("enterNode   " ~ Model.stringof ~ " ", orientation));
-
-			mvisitor.enterNode!order(data, model);
-
-			output_size.put(SizeState("enterNode   " ~ Model.stringof ~ " ", model.size));
-		}
-
-		void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			mvisitor.leaveNode!order(data, model);
-
-			output_size.put(SizeState("leaveNode   " ~ Model.stringof ~ " ", model.size));
-			output_orientation.put(OrientationState("leaveNode   " ~ Model.stringof ~ " ", orientation));
-		}
-
-		void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			output_orientation.put(OrientationState("processLeaf " ~ Model.stringof ~ " ", orientation));
-
-			mvisitor.processLeaf!order(data, model);
-
-			output_size.put(SizeState("processLeaf " ~ Model.stringof ~ " ", model.size));
-		}
-	}
-
-	static struct RenderVisitor
-	{
-		TreePathVisitor tpvisitor;
-		alias tpvisitor this;
-
-		Vector!(PositionState, Mallocator) output_position;
-
-		@disable this();
-
-		this(float width, float height, Orientation orientation)
-		{
-			tpvisitor = TreePathVisitor(width, height, orientation);
-		}
-
-		void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			tpvisitor.enterNode!order(data, model);
-
-			output_position.put(PositionState("enterNode   " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
-		}
-
-		void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			tpvisitor.leaveNode!order(data, model);
-
-			output_position.put(PositionState("leaveNode   " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
-		}
-
-		void processLeaf(Order order, Data, Model)(ref const(Data) data, ref Model model)
-		{
-			tpvisitor.processLeaf!order(data, model);
-
-			output_position.put(PositionState("processLeaf " ~ Model.stringof ~ " ", tree_path.value[].dup, position));
-		}
-	}
-
 	static struct V
 	{
 		long a;
