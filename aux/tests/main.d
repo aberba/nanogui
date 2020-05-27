@@ -5,4 +5,5 @@ mixin runTestsMain!(
 	"aux.model",
 	"aux.traits",
 	"aux.test",
+	"aux.test_aggregate",
 );
