@@ -687,6 +687,7 @@ unittest
 
 	model.size.should.be == 0;
 	auto visitor = PrettyPrintingVisitor(120, 17);
+	visitor.orientation = Orientation.Vertical;
 	model.visitForward(data, visitor);
 
 	model.collapsed.should.be == true;
@@ -1018,6 +1019,7 @@ version(unittest)
 			];
 
 			v = RelativeMeasurer();
+			v.orientation = Orientation.Vertical;
 			model = makeModel(data);
 			model.collapsed = false;
 			setPropertyByTreePath!"collapsed"(data, model, [3], false);
@@ -1094,7 +1096,7 @@ version(unittest)
 			];
 			v.pos.should.be == 170;
 
-			v.position = 0;
+			v.path_position = 0;
 			v.path.value = [4,2,1];
 			model.visitForward(data, v);
 			v.output.should.be == [
@@ -1115,7 +1117,7 @@ version(unittest)
 			// default
 			{
 				v.path.clear;
-				v.position[v.orientation] = 0;
+				v.position = 0;
 				v.destination[] = v.destination[0].nan;
 				model.visitForward(data, v);
 
@@ -1150,7 +1152,7 @@ version(unittest)
 			// start path is not null
 			{
 				v.path.value = [3, 0];
-				v.position = 0;
+				v.path_position = 0;
 				v.destination = 55;
 				model.visitForward(data, v);
 
@@ -1162,7 +1164,7 @@ version(unittest)
 			// reverse order, start path is not null
 			{
 				v.path.value = [4, 1];
-				v.position = [0, 90];
+				v.path_position = 90;
 				v.destination = 41;
 
 				model.visitBackward(data, v);
@@ -1324,6 +1326,7 @@ unittest
 	auto data = [0, 1, 2, 3];
 	auto model = makeModel(data);
 	auto visitor = RelativeMeasurer();
+	visitor.orientation = Orientation.Vertical;
 
 	model.collapsed = false;
 	{
@@ -1352,14 +1355,14 @@ unittest
 	];
 
 	visitor.path.value = [1,];
-	visitor.position[visitor.orientation] = 20;
+	visitor.path_position = 20;
 	model.visitForward(data, visitor);
 	visitor.output.should.be == [
 		TreePosition([1], [0, 20]),
 		TreePosition([2], [0, 30]),
 		TreePosition([3], [0, 40]),
 	];
-	visitor.position[visitor.orientation] = 20;
+
 	model.visitBackward(data, visitor);
 	visitor.output.should.be == [
 		TreePosition([1], [0, 20]),
@@ -1398,6 +1401,7 @@ unittest
 	const data = Data(0, 1, 2, "3", NestedData2(ushort(2), NestedData1(1_000_000_000, 'z'), "text"));
 	auto model = makeModel(data);
 	auto visitor = RelativeMeasurer();
+	visitor.orientation = Orientation.Vertical;
 
 	model.collapsed = false;
 	{
@@ -1446,8 +1450,8 @@ unittest
 
 	{
 		visitor.path.value = [0];
-		visitor.position[visitor.orientation] = 130;
-		visitor.dest = visitor.pos + 20;
+		visitor.path_position = 130;
+		visitor.dest = visitor.path_position + 20;
 		model.visitForward(data, visitor);
 		visitor.output.should.be == [
 			TreePosition([0], [0, 130]),
@@ -1458,7 +1462,7 @@ unittest
 	}
 
 	visitor.path.value = [2];
-	visitor.position[visitor.orientation] = 30;
+	visitor.path_position = 30;
 	visitor.dest = visitor.dest.nan;
 	model.visitForward(data, visitor);
 
@@ -1733,7 +1737,8 @@ unittest
 		];
 
 		rv = RenderVisitor(120, 9, Orientation.Vertical);
-		rv.position = [0, 50];
+		rv.position = 0;
+		rv.path_position = 50;
 		rv.path.value = [0];
 		debug logger.trace("------ RenderVisitor V ---------------------");
 		model.visitForward(data, rv);
