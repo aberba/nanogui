@@ -939,7 +939,10 @@ struct ScalarModel(alias A)
 		}
 
 		static if (hasTreePath)
+		{
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
+		}
 
 		static if (hasTreePath) with(visitor) 
 		{
@@ -988,7 +991,10 @@ struct ScalarModel(alias A)
 		}
 
 		static if (hasTreePath)
+		{
 			debug logger.tracef("     [after  leaf ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+			debug logger.tracef("     [after  leaf ] path: %s path position: %s", visitor.path, visitor.path_position);
+		}
 		debug logger.tracef("     [after  leaf ] %s", typeof(this).stringof);
 
 		return false;
@@ -1058,7 +1064,10 @@ mixin template visitImpl()
 		}
 
 		static if (hasTreePath)
+		{
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
+		}
 
 		static if (hasTreePath && Sinking)
 		{
@@ -1096,8 +1105,9 @@ mixin template visitImpl()
 				assert(this.orientation == visitor.orientation);
 				// (+) deferred_change setup (sinking)
 				visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? header_size : 0;
-				debug logger.tracef("[ after enterNode ] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
-				with(visitor) if (pos+deferred_change[this.orientation] > dest)
+				debug logger.tracef("[    finishing    ] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
+				debug logger.tracef("[    finishing    ] pos: %s dest: %s", visitor.position, visitor.destination);
+				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
 				{
 					state = State.finishing;
 					path = tree_path;
@@ -1137,7 +1147,7 @@ mixin template visitImpl()
 					else
 						visitor.deferred_change[] = 0;
 					visitor.position[orientation] = old_position;
-					debug logger.tracef(" [after leaveNode ] pos: %s model: %s, visitor: %s", visitor.position, this.orientation, visitor.orientation);
+					debug logger.tracef(" [restore position] model: %s, visitor: %s", this.orientation, visitor.orientation);
 				}
 			}
 
@@ -1158,7 +1168,10 @@ mixin template visitImpl()
 			}
 
 			static if (hasTreePath)
-				debug logger.tracef(" [after leaveNode ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+			{
+				debug logger.tracef(" [after leaveNode ] pos: %s deferred: %s", visitor.position, visitor.deferred_change);
+				debug logger.tracef(" [after leaveNode ] path: %s path position: %s", visitor.path, visitor.path_position);
+			}
 
 			debug logger.tracef(" [after leaveNode ] %s", typeof(this).stringof);
 		}
@@ -1179,6 +1192,7 @@ mixin template visitImpl()
 			}
 
 			static if (hasTreePath) visitor.tree_path.put(0);
+			static if (hasTreePath) () @trusted { debug logger.tracef(" tree_path: %s", visitor.tree_path.value[]); } ();
 			static if (hasTreePath) scope(exit) visitor.tree_path.popBack;
 			const len = getLength!(Data, data);
 			static if (is(typeof(model.length)))
@@ -1224,6 +1238,7 @@ mixin template visitImpl()
 				foreach(i; childIndices)
 				{
 					static if (hasTreePath) visitor.tree_path.back = i;
+					static if (hasTreePath) () @trusted { debug logger.tracef(" tree_path: %s", visitor.tree_path.value[]); } ();
 					static if (hasTreePath) if (model[i].Collapsable)
 					{
 						const orientation_changed = (orientation != model[i].orientation);
@@ -1258,6 +1273,7 @@ mixin template visitImpl()
 							enum FieldNo = (Sinking) ? i : len - i - 1;
 							enum member = DrawableMembers!Data[FieldNo];
 							static if (hasTreePath) visitor.tree_path.back = cast(int) FieldNo;
+							static if (hasTreePath) () @trusted { debug logger.tracef(" tree_path: %s", visitor.tree_path.value[]); } ();
 							static if (hasTreePath && mixin("this." ~ member).Collapsable)
 							{
 								const orientation_changed = (orientation != mixin("this." ~ member).orientation);
@@ -1483,6 +1499,10 @@ unittest
 
 void visit(Model, Data, Visitor)(ref Model model, auto ref Data data, ref Visitor visitor, double destination)
 {
+	debug logger.tracef("=== visit ===");
+	debug logger.tracef("=== %s", Model.stringof);
+	debug logger.tracef("=== destination: %s", destination);
+	debug logger.tracef("=============");
 	visitor.destination = destination;
 	if (destination == visitor.pos)
 		return;
