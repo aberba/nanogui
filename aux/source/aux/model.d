@@ -962,6 +962,7 @@ struct ScalarModel(alias A)
 				{
 					state = State.finishing;
 					path = tree_path;
+					path_position = position[orientation];
 				}
 				static if (Bubbling)
 				{
@@ -1091,6 +1092,7 @@ mixin template visitImpl()
 				{
 					state = State.finishing;
 					path = tree_path;
+					path_position = position[orientation];
 				}
 			}
 		}
@@ -1141,6 +1143,7 @@ mixin template visitImpl()
 					{
 						state = State.finishing;
 						path = tree_path;
+						path_position = position[orientation];
 					}
 				}
 			}
@@ -1306,8 +1309,10 @@ auto setPropertyByTreePath(string propertyName, Value, Data, Model)(auto ref Dat
 {
 	auto pv = PropertyVisitor!(propertyName, Value)();
 	pv.position = 0;
+	pv.path_position = 0;
 	pv.path.value = path;
 	pv.value = value;
+	pv.size = [1, 1];
 	pv.propertyKind = PropertyKind.setter;
 	model.visitForward(data, pv);
 }
@@ -1316,7 +1321,9 @@ auto getPropertyByTreePath(string propertyName, Value, Data, Model)(auto ref Dat
 {
 	auto pv = PropertyVisitor!(propertyName, Value)();
 	pv.position = 0;
+	pv.path_position = 0;
 	pv.path.value = path;
+	pv.size = [1, 1];
 	pv.propertyKind = PropertyKind.getter;
 	model.visitForward(data, pv);
 	return pv.value;
@@ -1480,6 +1487,14 @@ void visitForward(Model, Data, Visitor)(ref Model model, auto ref const(Data) da
 	{
 		visitor.state = (visitor.path.value.length) ? visitor.State.seeking : visitor.State.rest;
 		visitor.deferred_change = 0;
+		if (visitor.path.value.length)
+		{
+			import std.math : isNaN;
+			assert(!visitor.path_position.isNaN);
+			visitor.position[visitor.orientation] = visitor.path_position;
+		}
+		else if (visitor.position[visitor.orientation] != visitor.position[visitor.orientation])
+			visitor.position[visitor.orientation] = 0;
 	}
 	visitor.enterTree!order(data, model);
 	model.visit!order(data, visitor);
@@ -1492,6 +1507,14 @@ void visitBackward(Model, Data, Visitor)(ref Model model, auto ref Data data, re
 	{
 		visitor.state = (visitor.path.value.length) ? visitor.State.seeking : visitor.State.rest;
 		visitor.deferred_change = 0;
+		if (visitor.path.value.length)
+		{
+			import std.math : isNaN;
+			assert(!visitor.path_position.isNaN);
+			visitor.position[visitor.orientation] = visitor.path_position;
+		}
+		else if (visitor.position[visitor.orientation] != visitor.position[visitor.orientation])
+			visitor.position[visitor.orientation] = 0;
 	}
 	visitor.enterTree!order(data, model);
 	model.visit!order(data, visitor);
@@ -1662,6 +1685,7 @@ struct DefaultVisitorImpl(
 		TreePath tree_path, path;
 		alias SizeType = double;
 		SizeType[2] position, deferred_change, destination;
+		SizeType path_position;
 
 		@property
 		{
