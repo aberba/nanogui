@@ -61,7 +61,9 @@ public:
 		_model.size = 0;
 		_model_changed = true;
 		calculateScrollableState;
+		rm.path_position = 0;
 		rm.position = 0;
+		rm.size = [width, fontSize];
 		visit(_model, _data, rm, 1);
 	}
 
@@ -89,8 +91,8 @@ public:
 		if (_model_changed)
 		{
 			const scroll_position = mScroll * (_model.size - size.y);
-			import nanogui.experimental.utils : MeasureVisitor;
-			auto mv = MeasureVisitor(size.x, fontSize);
+			import nanogui.experimental.utils : MeasureVisitor, Orientation;
+			auto mv = MeasureVisitor(size.x, fontSize, Orientation.Vertical);
 			_model.visitForward(_data, mv);
 			mScroll = scroll_position / (_model.size - size.y);
 			_model_changed = false;
@@ -304,8 +306,14 @@ public:
 		ctx.translate(mPos.x, mPos.y);
 		ctx.intersectScissor(0, 0, ctx.size.x, mSize.y);
 		auto renderer = RenderingVisitor(ctx);
+		{
+			import nanogui.experimental.utils : Orientation;
+			renderer.orientation = Orientation.Vertical;
+		}
 		renderer.path = rm.path;
-		renderer.position = rm.position;
+		renderer.position = 0;
+		renderer.path_position = rm.path_position;
+		renderer.size = [width, fontSize];
 		renderer.finish = rm.destination[1] + size.y;
 		import nanogui.layout : Orientation;
 		renderer.ctx.orientation = Orientation.Vertical;
