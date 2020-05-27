@@ -1105,8 +1105,8 @@ mixin template visitImpl()
 				assert(this.orientation == visitor.orientation);
 				// (+) deferred_change setup (sinking)
 				visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? header_size : 0;
-				debug logger.tracef("[    finishing    ] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
-				debug logger.tracef("[    finishing    ] pos: %s dest: %s", visitor.position, visitor.destination);
+				debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
+				debug logger.tracef("[ finish enterNode] pos: %s dest: %s", visitor.position, visitor.destination);
 				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
 				{
 					state = State.finishing;
@@ -1148,6 +1148,21 @@ mixin template visitImpl()
 						visitor.deferred_change[] = 0;
 					visitor.position[orientation] = old_position;
 					debug logger.tracef(" [restore position] model: %s, visitor: %s", this.orientation, visitor.orientation);
+				}
+			}
+
+			static if (hasTreePath && Sinking)
+			{
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				{
+					debug logger.tracef("[ finish leaveNode] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+					debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
+					with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+					{
+						state = State.finishing;
+						path = tree_path;
+						path_position = position[orientation];
+					}
 				}
 			}
 
