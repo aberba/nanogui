@@ -291,6 +291,7 @@ public:
 		if (_scroll_position != scroll_position)
 		{
 			_scroll_position = scroll_position;
+			rm.position = rm.path_position;
 			visit(_model, _data, rm, _scroll_position);
 		}
 
