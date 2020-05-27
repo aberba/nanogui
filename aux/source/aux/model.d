@@ -938,6 +938,9 @@ struct ScalarModel(alias A)
 			return true;
 		}
 
+		static if (hasTreePath)
+			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+
 		static if (hasTreePath) with(visitor) 
 		{
 			// (+) position change (leaf)
@@ -945,10 +948,11 @@ struct ScalarModel(alias A)
 			position[] += deferred_change[];
 			const local_orientation = visitor.orientation;
 			const local_size = (this.orientation == Orientation.Horizontal) ? this.size : visitor.size[Orientation.Vertical];
+			debug logger.tracef("     [ after leaf ] this.size: %s visitor.size[Orientation.Vertical] %s", this.size, visitor.size[Orientation.Vertical]);
 			// (+) deferred_change setup (leaf)
 			const delta = (Sinking) ? local_size : -local_size;
 			deferred_change = 0;
-			debug logger.tracef("     [ after leaf ] state: %s orientation: %s", visitor.state, local_orientation);
+			debug logger.tracef("     [ after leaf ] state: %s orientation: %s local_size: %s", visitor.state, local_orientation, local_size);
 			if (state.among(State.first, State.rest))
 			{
 				static if (Sinking)
@@ -983,6 +987,8 @@ struct ScalarModel(alias A)
 			visitor.processLeaf!order(data, this);
 		}
 
+		static if (hasTreePath)
+			debug logger.tracef("     [after  leaf ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 		debug logger.tracef("     [after  leaf ] %s", typeof(this).stringof);
 
 		return false;
@@ -1050,6 +1056,9 @@ mixin template visitImpl()
 		{
 			return true;
 		}
+
+		static if (hasTreePath)
+			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 
 		static if (hasTreePath && Sinking)
 		{
@@ -1148,7 +1157,10 @@ mixin template visitImpl()
 				}
 			}
 
-			debug logger.tracef(" [after leaveNode ]");
+			static if (hasTreePath)
+				debug logger.tracef(" [after leaveNode ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+
+			debug logger.tracef(" [after leaveNode ] %s", typeof(this).stringof);
 		}
 
 		if (!this.collapsed)
