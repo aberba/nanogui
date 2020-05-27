@@ -1,11 +1,13 @@
 module aux.test_aggregate;
 
+version (unittest):
+
 import unit_threaded : should, be, Name;
 import std.experimental.allocator.mallocator : Mallocator;
 import automem.vector : Vector;
 
 import aux.model : Order, Orientation, MeasureVisitor, makeModel,
-	TreePathVisitor, logger, visitForward;
+	TreePathVisitor, logger, visitForward, visit;
 
 // this is initial attempt to separate tests to different files
 
@@ -154,7 +156,7 @@ struct RenderVisitor
 	}
 }
 
-version(unittest) @Name("aggregate+orientation")
+@Name("aggregate+orientation")
 unittest
 {
 	static struct V
@@ -579,7 +581,7 @@ unittest
 	}
 }
 
-version(unittest) @Name("taggedalgebraic")
+@Name("taggedalgebraic")
 unittest
 {
 	struct Test
