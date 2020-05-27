@@ -578,3 +578,89 @@ unittest
 		];
 	}
 }
+
+version(unittest) @Name("taggedalgebraic")
+unittest
+{
+	struct Test
+	{
+		float f = 7.7;
+		int i = 8;
+		string s = "some text";
+	}
+
+	struct Test2
+	{
+		double d = 8.8;
+		long l = 999;
+		Test t;
+	}
+
+	@("orientation.Horizontal")
+	struct Test3
+	{
+		string label = "test3:";
+		float value = 1.234567e34;
+	}
+
+	import taggedalgebraic : TaggedAlgebraic;
+	union Payload
+	{
+		float f;
+		int i;
+		string str;
+		double d;
+		Test t;
+		Test2 t2;
+		Test3 t3;
+	}
+	alias Item = TaggedAlgebraic!Payload;
+	Item[] data;
+
+	{
+		data = [Item("item #0"), Item(1), Item(Test3("test3:", 1.23457e+34)), Item(3), Item(4)];
+		auto model = makeModel(data);
+		auto mv = MeasureVisitor2(120, 16);
+		model.collapsed = false;
+		model.visitForward(data, mv);
+
+		mv.output_orientation[].should.be == [
+			OrientationState("enterNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!string ",                     Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!int ",                        Orientation.Vertical  ), 
+			OrientationState("enterNode   AggregateModel!(Test3) ",                 Orientation.Horizontal), 
+			OrientationState("leaveNode   AggregateModel!(Test3) ",                 Orientation.Horizontal), 
+			OrientationState("processLeaf ScalarModel!int ",                        Orientation.Vertical  ), 
+			OrientationState("processLeaf ScalarModel!int ",                        Orientation.Vertical  ), 
+			OrientationState("leaveNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", Orientation.Vertical  ),
+		];
+
+		mv.output_size[].should.be == [
+			SizeState("enterNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ",  17), 
+			SizeState("processLeaf ScalarModel!string ",                      17), 
+			SizeState("processLeaf ScalarModel!int ",                         17), 
+			SizeState("enterNode   AggregateModel!(Test3) ",                 121), 
+			SizeState("leaveNode   AggregateModel!(Test3) ",                 121), 
+			SizeState("processLeaf ScalarModel!int ",                         17), 
+			SizeState("processLeaf ScalarModel!int ",                         17), 
+			SizeState("leaveNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", 102),
+		];
+
+		auto rv = RenderVisitor(120, 16, Orientation.Vertical);
+		rv.position = 0;
+		debug logger.trace("------ RenderVisitor -----------------------");
+		model.visitForward(data, rv);
+		debug logger.trace("--------------------------------------------");
+
+		rv.output_position[].should.be == [
+			PositionState("enterNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", [], [0,   0]), 
+			PositionState("processLeaf ScalarModel!string ",                    [0], [0,  17]), 
+			PositionState("processLeaf ScalarModel!int ",                       [1], [0,  34]), 
+			PositionState("enterNode   AggregateModel!(Test3) ",                [2], [0,  51]), 
+			PositionState("leaveNode   AggregateModel!(Test3) ",                [2], [0,  51]), 
+			PositionState("processLeaf ScalarModel!int ",                       [3], [0,  68]), 
+			PositionState("processLeaf ScalarModel!int ",                       [4], [0,  85]), 
+			PositionState("leaveNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", [], [0,  85])
+		];
+	}
+}
