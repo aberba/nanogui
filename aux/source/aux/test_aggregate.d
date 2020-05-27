@@ -156,6 +156,15 @@ struct RenderVisitor
 	}
 }
 
+struct RelativeMeasurer
+{
+	import aux.model;
+
+	alias DefVisitor = DefaultVisitorImpl!(TreePathEnabled.yes);
+	DefVisitor default_visitor;
+	alias default_visitor this;
+}
+
 @Name("aggregate+orientation")
 unittest
 {
@@ -664,5 +673,45 @@ unittest
 			PositionState("processLeaf ScalarModel!int ",                       [4], [0,  85]), 
 			PositionState("leaveNode   RaRModel!(TaggedAlgebraic!(Payload)[]) ", [], [0,  85])
 		];
+
+		RelativeMeasurer rm;
+		rm.path_position = 0;
+		rm.position = 0;
+		rm.size = [120, 16];
+		rm.orientation = Orientation.Vertical;
+		visit(model, data, rm, 1);
+
+		rm.path.value[].should.be == [];
+		rm.path_position.should.be == 0;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 9);
+		rm.path.value[].should.be == [];
+		rm.path_position.should.be == 0;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 19);
+		rm.path.value[].should.be == [0];
+		rm.path_position.should.be == 17;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 29);
+		rm.path.value[].should.be == [0];
+		rm.path_position.should.be == 17;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 39);
+		rm.path.value[].should.be == [1];
+		rm.path_position.should.be == 34;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 49);
+		rm.path.value[].should.be == [1];
+		rm.path_position.should.be == 34;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 59);
+		rm.path.value[].should.be == [2];
+		rm.path_position.should.be == 51;
 	}
 }
