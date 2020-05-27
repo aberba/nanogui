@@ -697,11 +697,13 @@ unittest
 
 	setPropertyByTreePath!"collapsed"(data, model, [], false);
 	model.visitForward(data, visitor);
+	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*7;
 	model.size.should.be ~ 18.0*7;
 	visitor.pos.should.be ~ 6*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [3], false);
+	model.visitForward(data, visitor);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*9;
 	model.size.should.be ~ 18.0*9;
@@ -709,11 +711,13 @@ unittest
 
 	setPropertyByTreePath!"collapsed"(data, model, [4], false);
 	model.visitForward(data, visitor);
+	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
 	visitor.pos.should.be ~ (6+2+3)*18.0;
 
 	setPropertyByTreePath!"collapsed"(data, model, [5], false);
+	model.visitForward(data, visitor);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*15;
 	model.size.should.be ~ 18.0*15;
@@ -734,6 +738,7 @@ unittest
 	setPropertyByTreePath!"collapsed"(data, model, [5], true);
 	// clear visitor to calculate the size of the whole model
 	visitor.clear;
+	model.visitForward(data, visitor);
 	model.visitForward(data, visitor);
 	model.size.should.be ~ (visitor.currentSize + model.Spacing)*12;
 	model.size.should.be ~ 18.0*12;
