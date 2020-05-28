@@ -904,6 +904,9 @@ struct ScalarModel(alias A)
 
 	private bool visit(Order order, Visitor)(auto ref const(Data) data, ref Visitor visitor)
 	{
+		static if (Data.sizeof > 24 && !__traits(isRef, data))
+			pragma(msg, "Warning: ", Data, " is a value type and has size larger than 24 bytes");
+
 		import std.algorithm : among;
 
 		enum Sinking     = order == Order.Sinking;
@@ -959,6 +962,9 @@ struct ScalarModel(alias A)
 			}
 		}
 
+		static if (Sinking)
+			visitor.processLeaf!(order, Data)(data, this);
+
 		static if (hasTreePath && Sinking)
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
@@ -975,9 +981,6 @@ struct ScalarModel(alias A)
 				}
 			}
 		}
-
-		static if (Sinking)
-			visitor.processLeaf!order(data, this);
 
 		scope(exit)
 		{
