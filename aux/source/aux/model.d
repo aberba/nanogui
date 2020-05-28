@@ -962,20 +962,24 @@ struct ScalarModel(alias A)
 				{
 					visitor.processLeaf!order(data, this);
 					deferred_change[local_orientation] = delta;
-					debug logger.tracef("     [ after leaf ] deferred (S) dfr: %s", visitor.deferred_change);
 				}
+				debug logger.tracef("[     finish leaf ] deferred dfr: %s %s %s", visitor.deferred_change, this.orientation, local_orientation);
+				debug logger.tracef("[     finish leaf ] position: %s destination: %s", visitor.position, visitor.destination);
+				debug logger.tracef("[     finish leaf ] pos: %s dest: %s", visitor.pos, visitor.dest);
+				debug logger.tracef("[     finish leaf ] pos: %s dest: %s deferred_change[local_orientation] %s", visitor.pos, visitor.dest, deferred_change[local_orientation]);
+				debug logger.tracef("[     finish leaf ] pos+deferred_change[local_orientation]: %s", pos+deferred_change[local_orientation]);
 				if ((Sinking  && pos+deferred_change[local_orientation] > dest) ||
-					(Bubbling && pos                                   < dest))
+					(Bubbling && pos                                   <= dest))
 				{
 					state = State.finishing;
 					path = tree_path;
 					path_position = position[orientation];
+					debug logger.tracef("[     finish leaf ] path: %s path_position: %s", path, path_position);
 				}
 				static if (Bubbling)
 				{
 					visitor.processLeaf!order(data, this);
 					deferred_change[local_orientation] = delta;
-					debug logger.tracef("     [ after leaf ] deferred (B) dfr: %s", visitor.deferred_change);
 				}
 			}
 			else
