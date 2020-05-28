@@ -21,6 +21,7 @@ struct PrettyPrintingVisitor
 	{
 		measure_visitor = MeasureVisitor(width, height, Orientation.Vertical);
 		measure_visitor.orientation = Orientation.Vertical;
+		tree_path_visitor.size = [width, height];
 	}
 
 	auto processItem(T...)(T msg)
@@ -148,6 +149,7 @@ unittest
 	auto m = Model!d();
 
 	auto visitor = PrettyPrintingVisitor(120, 9);
+	visitor.position = 0;
 	visitor.processItem;
 	m.collapsed = false;
 	m.visitForward(d, visitor);
@@ -1024,6 +1026,7 @@ version(unittest)
 			];
 
 			v = RelativeMeasurer();
+			v.size = [120, 9];
 			v.orientation = Orientation.Vertical;
 			model = makeModel(data);
 			model.collapsed = false;
@@ -1331,6 +1334,7 @@ unittest
 	auto data = [0, 1, 2, 3];
 	auto model = makeModel(data);
 	auto visitor = RelativeMeasurer();
+	visitor.size = [120, 9];
 	visitor.orientation = Orientation.Vertical;
 
 	model.collapsed = false;
@@ -1406,6 +1410,7 @@ unittest
 	const data = Data(0, 1, 2, "3", NestedData2(ushort(2), NestedData1(1_000_000_000, 'z'), "text"));
 	auto model = makeModel(data);
 	auto visitor = RelativeMeasurer();
+	visitor.size = [120, 9];
 	visitor.orientation = Orientation.Vertical;
 
 	model.collapsed = false;
