@@ -1144,16 +1144,15 @@ mixin template visitImpl()
 		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				assert(this.orientation == visitor.orientation);
 				// (+) deferred_change setup (sinking)
-				visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? header_size : 0;
-				debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, this.orientation);
+				visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? header_size : 0;
+				debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
 				debug logger.tracef("[ finish enterNode] pos: %s dest: %s", visitor.position, visitor.destination);
 				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
 				{
 					state = State.finishing;
 					path = tree_path;
-					path_position = position[orientation];
+					path_position = position[visitor.orientation];
 				}
 			}
 		}
@@ -1203,7 +1202,7 @@ mixin template visitImpl()
 					{
 						state = State.finishing;
 						path = tree_path;
-						path_position = position[orientation];
+						path_position = position[visitor.orientation];
 					}
 				}
 			}
@@ -1214,12 +1213,12 @@ mixin template visitImpl()
 				{
 					// (+) deferred_change setup (bubbling)
 					visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? -this.header_size : 0;
-					deferred_change[this.orientation.nextAxis] = 0;
+					deferred_change[visitor.orientation.nextAxis] = 0;
 					if (pos <= dest)
 					{
 						state = State.finishing;
 						path = tree_path;
-						path_position = position[orientation];
+						path_position = position[visitor.orientation];
 					}
 				}
 			}
