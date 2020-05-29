@@ -1145,7 +1145,7 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				// (+) deferred_change setup (sinking)
-				visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? header_size : 0;
+				visitor.deferred_change[visitor.orientation] = header_size;
 				debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
 				debug logger.tracef("[ finish enterNode] pos: %s dest: %s", visitor.position, visitor.destination);
 				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
@@ -1212,7 +1212,7 @@ mixin template visitImpl()
 				if (state.among(State.first, State.rest))
 				{
 					// (+) deferred_change setup (bubbling)
-					visitor.deferred_change[orientation] = (orientation == Orientation.Vertical) ? -this.header_size : 0;
+					visitor.deferred_change[visitor.orientation] = -header_size;
 					deferred_change[visitor.orientation.nextAxis] = 0;
 					if (pos <= dest)
 					{
@@ -1820,7 +1820,8 @@ struct MeasureVisitor
 	void enterNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
 	{
 		assert(model.orientation == this.orientation);
-		model.size = model.header_size = size[model.orientation] + model.Spacing;
+		model.size = size[model.orientation] + model.Spacing;
+		model.header_size = (orientation == Orientation.Vertical) ? model.size : 0;
 	}
 
 	void leaveNode(Order order, Data, Model)(ref const(Data) data, ref Model model)
