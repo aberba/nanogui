@@ -718,5 +718,30 @@ unittest
 		visit(model, data, rm, 49);
 		rm.path.value[].should.be == [1];
 		rm.path_position.should.be == 34;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 39);
+		rm.path.value[].should.be == [1];
+		rm.path_position.should.be == 34;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 29);
+		rm.path.value[].should.be == [0];
+		rm.path_position.should.be == 17;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 19);
+		rm.path.value[].should.be == [0];
+		rm.path_position.should.be == 17;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 9);
+		rm.path.value[].should.be == [];
+		rm.path_position.should.be == 0;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 0);
+		rm.path.value[].should.be == [];
+		rm.path_position.should.be == 0;
 	}
 }
