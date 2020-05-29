@@ -1110,15 +1110,12 @@ mixin template visitImpl()
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
 
-			static if (Sinking)
+			if (Sinking && visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
-				{
-					// (+) position change (sinking)
-					visitor.position[] += visitor.deferred_change[];
-					visitor.deferred_change[] = 0;
-					debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
-				}
+				// (+) position change (sinking)
+				visitor.position[] += visitor.deferred_change[];
+				visitor.deferred_change[] = 0;
+				debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			}
 
 			// store current position to restore it if the orientation
