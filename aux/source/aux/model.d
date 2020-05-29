@@ -1137,8 +1137,6 @@ mixin template visitImpl()
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				visitor.enterNode!(order, Data)(data, this);
 		}
-		else
-			visitor.enterNode!(order, Data)(data, this);
 
 		static if (hasTreePath && Sinking)
 		{
@@ -1156,6 +1154,9 @@ mixin template visitImpl()
 				}
 			}
 		}
+
+		static if (!hasTreePath)
+			visitor.enterNode!(order, Data)(data, this);
 
 		scope(exit)
 		{
