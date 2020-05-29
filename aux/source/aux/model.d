@@ -1169,18 +1169,7 @@ mixin template visitImpl()
 
 				// restore parent orientation
 				visitor.orientation = old_orientation;
-			}
-			else
-			{
-				visitor.leaveNode!order(data, this);
 
-				// restore parent orientation
-				visitor.orientation = old_orientation;
-			}
-
-			// restore visitor position because the orientation changed
-			static if (hasTreePath)
-			{
 				// (+) deferred_change setup (caret return)
 				if (this.orientation != visitor.orientation)
 				{
@@ -1227,6 +1216,13 @@ mixin template visitImpl()
 
 				debug logger.tracef(" [after leaveNode ] pos: %s deferred: %s", visitor.position, visitor.deferred_change);
 				debug logger.tracef(" [after leaveNode ] path: %s path position: %s", visitor.path, visitor.path_position);
+			}
+			else
+			{
+				visitor.leaveNode!order(data, this);
+
+				// restore parent orientation
+				visitor.orientation = old_orientation;
 			}
 
 			debug logger.tracef(" [after leaveNode ] %s", typeof(this).stringof);
