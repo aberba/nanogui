@@ -980,7 +980,7 @@ struct ScalarModel(alias A)
 				{
 					// (+) position change (bubbling)
 					visitor.position[] += visitor.deferred_change[];
-					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					debug logger.tracef("[    processLeaf  ] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 					visitor.deferred_change = 0;
 				}
 
@@ -989,15 +989,15 @@ struct ScalarModel(alias A)
 
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					debug logger.tracef("[   finish leaf   ] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
-					debug logger.tracef("[   finish leaf   ] pos: %s dest: %s", visitor.position, visitor.destination);
-
 					static if (Bubbling)
 					{
 						// (+) deferred_change setup (bubbling)
 						visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? -header_size : -this.size;
 						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
 					}
+
+					debug logger.tracef("[   finish leaf   ] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+					debug logger.tracef("[   finish leaf   ] pos: %s dest: %s", visitor.position, visitor.destination);
 
 					with(visitor) if (
 						(Sinking  && pos+deferred_change[visitor.orientation]  > dest) ||
@@ -1126,7 +1126,7 @@ mixin template visitImpl()
 				{
 					// (+) position change (bubbling)
 					visitor.position[] += visitor.deferred_change[];
-					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					debug logger.tracef("[       leaveNode ] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
 					visitor.deferred_change = 0;
 				}
 
@@ -1150,15 +1150,15 @@ mixin template visitImpl()
 
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					debug logger.tracef("[ finish leaveNode] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
-					debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
-
 					static if (Bubbling)
 					{
 						// (+) deferred_change setup (bubbling)
 						visitor.deferred_change[visitor.orientation] = -header_size;
 						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
 					}
+
+					debug logger.tracef("[ finish leaveNode] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+					debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
 
 					with(visitor) if (
 						(Sinking  && pos+deferred_change[visitor.orientation]  > dest) ||
