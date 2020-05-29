@@ -1105,6 +1105,9 @@ mixin template visitImpl()
 			return true;
 		}
 
+		const old_orientation = visitor.orientation;
+		visitor.orientation = this.orientation;
+
 		static if (hasTreePath)
 		{
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
@@ -1128,9 +1131,6 @@ mixin template visitImpl()
 		{
 			const old_position = visitor.position[orientation];
 		}
-
-		const old_orientation = visitor.orientation;
-		visitor.orientation = this.orientation;
 
 		static if (hasTreePath)
 		{
