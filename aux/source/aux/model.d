@@ -1183,41 +1183,38 @@ mixin template visitImpl()
 					visitor.position[orientation] = old_position;
 					debug logger.tracef(" [restore position] model: %s, visitor: %s", this.orientation, visitor.orientation);
 				}
-			}
 
-			static if (hasTreePath && Sinking)
-			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				static if (Sinking)
 				{
-					debug logger.tracef("[ finish leaveNode] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
-					debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
-					with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+					if (visitor.state.among(visitor.State.first, visitor.State.rest))
 					{
-						state = State.finishing;
-						path = tree_path;
-						path_position = position[visitor.orientation];
+						debug logger.tracef("[ finish leaveNode] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+						debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
+						with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+						{
+							state = State.finishing;
+							path = tree_path;
+							path_position = position[visitor.orientation];
+						}
 					}
 				}
-			}
 
-			static if (hasTreePath && Bubbling) with(visitor)
-			{
-				if (state.among(State.first, State.rest))
+				static if (Bubbling) with(visitor)
 				{
-					// (+) deferred_change setup (bubbling)
-					visitor.deferred_change[visitor.orientation] = -header_size;
-					deferred_change[visitor.orientation.nextAxis] = 0;
-					if (pos <= dest)
+					if (state.among(State.first, State.rest))
 					{
-						state = State.finishing;
-						path = tree_path;
-						path_position = position[visitor.orientation];
+						// (+) deferred_change setup (bubbling)
+						visitor.deferred_change[visitor.orientation] = -header_size;
+						deferred_change[visitor.orientation.nextAxis] = 0;
+						if (pos <= dest)
+						{
+							state = State.finishing;
+							path = tree_path;
+							path_position = position[visitor.orientation];
+						}
 					}
 				}
-			}
 
-			static if (hasTreePath)
-			{
 				debug logger.tracef(" [after leaveNode ] pos: %s deferred: %s", visitor.position, visitor.deferred_change);
 				debug logger.tracef(" [after leaveNode ] path: %s path position: %s", visitor.path, visitor.path_position);
 			}
