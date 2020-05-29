@@ -1110,13 +1110,10 @@ mixin template visitImpl()
 
 		static if (hasTreePath)
 		{
-			static if (hasTreePath)
-			{
-				debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
-				debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
-			}
+			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
 
-			static if (hasTreePath && Sinking)
+			static if (Sinking)
 			{
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
@@ -1129,18 +1126,12 @@ mixin template visitImpl()
 
 			// store current position to restore it if the orientation
 			// changes
-			static if (hasTreePath)
-			{
-				const old_position = visitor.position[orientation];
-			}
+			const old_position = visitor.position[orientation];
 
-			static if (hasTreePath)
-			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
-					visitor.enterNode!(order, Data)(data, this);
-			}
+			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				visitor.enterNode!(order, Data)(data, this);
 
-			static if (hasTreePath && Sinking)
+			static if (Sinking)
 			{
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
