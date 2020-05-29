@@ -1129,11 +1129,10 @@ mixin template visitImpl()
 			const old_position = visitor.position[orientation];
 
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+			{
 				visitor.enterNode!(order, Data)(data, this);
 
-			static if (Sinking)
-			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				static if (Sinking)
 				{
 					// (+) deferred_change setup (sinking)
 					visitor.deferred_change[visitor.orientation] = header_size;
