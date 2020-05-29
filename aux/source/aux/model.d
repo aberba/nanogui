@@ -1073,6 +1073,16 @@ mixin template visitImpl()
 		enum Bubbling    = !Sinking; 
 		enum hasTreePath = Visitor.treePathEnabled;
 
+		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
+
+		if (visitor.complete)
+		{
+			return true;
+		}
+
+		const old_orientation = visitor.orientation;
+		visitor.orientation = this.orientation;
+
 		static if (hasTreePath)
 		{
 			import std.math : isNaN;
@@ -1096,20 +1106,7 @@ mixin template visitImpl()
 					return true;
 				}
 			}
-		}
 
-		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
-
-		if (visitor.complete)
-		{
-			return true;
-		}
-
-		const old_orientation = visitor.orientation;
-		visitor.orientation = this.orientation;
-
-		static if (hasTreePath)
-		{
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
 
