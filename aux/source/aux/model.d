@@ -1110,52 +1110,54 @@ mixin template visitImpl()
 
 		static if (hasTreePath)
 		{
-			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
-			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
-		}
-
-		static if (hasTreePath && Sinking)
-		{
-			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+			static if (hasTreePath)
 			{
-				// (+) position change (sinking)
-				visitor.position[] += visitor.deferred_change[];
-				visitor.deferred_change[] = 0;
-				debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+				debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+				debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
 			}
-		}
 
-		// store current position to restore it if the orientation
-		// changes
-		static if (hasTreePath)
-		{
-			const old_position = visitor.position[orientation];
-		}
-
-		static if (hasTreePath)
-		{
-			if (visitor.state.among(visitor.State.first, visitor.State.rest))
-				visitor.enterNode!(order, Data)(data, this);
-		}
-
-		static if (hasTreePath && Sinking)
-		{
-			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+			static if (hasTreePath && Sinking)
 			{
-				// (+) deferred_change setup (sinking)
-				visitor.deferred_change[visitor.orientation] = header_size;
-				debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
-				debug logger.tracef("[ finish enterNode] pos: %s dest: %s", visitor.position, visitor.destination);
-				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					state = State.finishing;
-					path = tree_path;
-					path_position = position[visitor.orientation];
+					// (+) position change (sinking)
+					visitor.position[] += visitor.deferred_change[];
+					visitor.deferred_change[] = 0;
+					debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+				}
+			}
+
+			// store current position to restore it if the orientation
+			// changes
+			static if (hasTreePath)
+			{
+				const old_position = visitor.position[orientation];
+			}
+
+			static if (hasTreePath)
+			{
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+					visitor.enterNode!(order, Data)(data, this);
+			}
+
+			static if (hasTreePath && Sinking)
+			{
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				{
+					// (+) deferred_change setup (sinking)
+					visitor.deferred_change[visitor.orientation] = header_size;
+					debug logger.tracef("[ finish enterNode] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
+					debug logger.tracef("[ finish enterNode] pos: %s dest: %s", visitor.position, visitor.destination);
+					with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+					{
+						state = State.finishing;
+						path = tree_path;
+						path_position = position[visitor.orientation];
+					}
 				}
 			}
 		}
-
-		static if (!hasTreePath)
+		else
 			visitor.enterNode!(order, Data)(data, this);
 
 		scope(exit)
