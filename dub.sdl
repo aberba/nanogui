@@ -6,7 +6,7 @@ copyright "Copyright © 2018-2020, drug007"
 dependency "gfm:math" version="~>8.0.0"
 dependency "gfm7:opengl" version="~>1.0.0"
 dependency "gfm7:sdl2" version="~>1.0.0"
-dependency "aux" version="*" path="./aux"
+dependency "auxil" version="*" path="./auxil"
 dependency "bindbc-opengl" version="~>0.12.0"
 dependency "bindbc-freetype" version="~>0.8.0"
 
