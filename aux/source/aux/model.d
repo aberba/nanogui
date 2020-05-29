@@ -1178,9 +1178,9 @@ mixin template visitImpl()
 					debug logger.tracef(" [restore position] model: %s, visitor: %s", this.orientation, visitor.orientation);
 				}
 
-				static if (Sinking)
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					if (visitor.state.among(visitor.State.first, visitor.State.rest))
+					static if (Sinking)
 					{
 						debug logger.tracef("[ finish leaveNode] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
 						debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
@@ -1193,14 +1193,14 @@ mixin template visitImpl()
 					}
 				}
 
-				static if (Bubbling) with(visitor)
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					if (state.among(State.first, State.rest))
+					static if (Bubbling)
 					{
 						// (+) deferred_change setup (bubbling)
 						visitor.deferred_change[visitor.orientation] = -header_size;
-						deferred_change[visitor.orientation.nextAxis] = 0;
-						if (pos <= dest)
+						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
+						with(visitor) if (pos <= dest)
 						{
 							state = State.finishing;
 							path = tree_path;
