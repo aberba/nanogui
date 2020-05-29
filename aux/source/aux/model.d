@@ -1152,21 +1152,31 @@ mixin template visitImpl()
 
 		scope(exit)
 		{
-			static if (hasTreePath && Bubbling)
+			static if (hasTreePath)
 			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				static if (Bubbling)
 				{
-					// (+) position change (bubbling)
-					visitor.position[] += visitor.deferred_change[];
-					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
-					visitor.deferred_change = 0;
+					if (visitor.state.among(visitor.State.first, visitor.State.rest))
+					{
+						// (+) position change (bubbling)
+						visitor.position[] += visitor.deferred_change[];
+						debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+						visitor.deferred_change = 0;
+					}
 				}
+
+				visitor.leaveNode!order(data, this);
+
+				// restore parent orientation
+				visitor.orientation = old_orientation;
 			}
+			else
+			{
+				visitor.leaveNode!order(data, this);
 
-			visitor.leaveNode!order(data, this);
-
-			// restore parent orientation
-			visitor.orientation = old_orientation;
+				// restore parent orientation
+				visitor.orientation = old_orientation;
+			}
 
 			// restore visitor position because the orientation changed
 			static if (hasTreePath)
