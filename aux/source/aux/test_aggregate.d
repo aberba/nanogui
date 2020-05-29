@@ -713,5 +713,10 @@ unittest
 		visit(model, data, rm, 59);
 		rm.path.value[].should.be == [2];
 		rm.path_position.should.be == 51;
+
+		rm.position[rm.orientation] = rm.path_position;
+		visit(model, data, rm, 49);
+		rm.path.value[].should.be == [1];
+		rm.path_position.should.be == 34;
 	}
 }

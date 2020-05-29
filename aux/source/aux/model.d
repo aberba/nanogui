@@ -1153,7 +1153,8 @@ mixin template visitImpl()
 					static if (Bubbling)
 					{
 						// (+) deferred_change setup (bubbling)
-						visitor.deferred_change[visitor.orientation] = -header_size;
+						visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ?
+							-visitor.size[visitor.orientation] - this.Spacing : 0;
 						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
 					}
 
