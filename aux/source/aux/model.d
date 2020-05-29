@@ -1149,15 +1149,12 @@ mixin template visitImpl()
 
 			scope(exit)
 			{
-				static if (Bubbling)
+				if (Bubbling && visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					if (visitor.state.among(visitor.State.first, visitor.State.rest))
-					{
-						// (+) position change (bubbling)
-						visitor.position[] += visitor.deferred_change[];
-						debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
-						visitor.deferred_change = 0;
-					}
+					// (+) position change (bubbling)
+					visitor.position[] += visitor.deferred_change[];
+					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					visitor.deferred_change = 0;
 				}
 
 				visitor.leaveNode!order(data, this);
@@ -1180,32 +1177,23 @@ mixin template visitImpl()
 
 				if (visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					static if (Sinking)
-					{
-						debug logger.tracef("[ finish leaveNode] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
-						debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
-						with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
-						{
-							state = State.finishing;
-							path = tree_path;
-							path_position = position[visitor.orientation];
-						}
-					}
-				}
+					debug logger.tracef("[ finish leaveNode] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+					debug logger.tracef("[ finish leaveNode] pos: %s dest: %s", visitor.position, visitor.destination);
 
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
-				{
 					static if (Bubbling)
 					{
 						// (+) deferred_change setup (bubbling)
 						visitor.deferred_change[visitor.orientation] = -header_size;
 						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
-						with(visitor) if (pos <= dest)
-						{
-							state = State.finishing;
-							path = tree_path;
-							path_position = position[visitor.orientation];
-						}
+					}
+
+					with(visitor) if (
+						(Sinking  && pos+deferred_change[visitor.orientation]  > dest) ||
+						(Bubbling && pos                                      <= dest)
+					) {
+						state = State.finishing;
+						path = tree_path;
+						path_position = position[visitor.orientation];
 					}
 				}
 
