@@ -962,7 +962,7 @@ struct ScalarModel(alias A)
 					visitor.processLeaf!(order, Data)(data, this);
 
 					// (+) deferred_change setup (sinking)
-					visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? visitor.size[Orientation.Vertical] + this.Spacing : this.size;
+					visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? header_size : this.size;
 					debug logger.tracef("[ finish processLeaf] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
 					debug logger.tracef("[ finish processLeaf] pos: %s dest: %s", visitor.position, visitor.destination);
 					with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
@@ -1016,15 +1016,7 @@ struct ScalarModel(alias A)
 			}
 		}
 		else
-		{
-			static if (Sinking)
-				visitor.processLeaf!order(data, this);
-			scope(exit)
-			{
-				static if (Bubbling)
-					visitor.processLeaf!order(data, this);
-			}
-		}
+			visitor.processLeaf!order(data, this);
 
 		return false;
 	}
