@@ -913,6 +913,13 @@ struct ScalarModel(alias A)
 		enum Bubbling    = !Sinking; 
 		enum hasTreePath = Visitor.treePathEnabled;
 
+		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
+
+		if (visitor.complete)
+		{
+			return true;
+		}
+
 		static if (hasTreePath)
 		{
 			import std.math : isNaN;
@@ -936,74 +943,28 @@ struct ScalarModel(alias A)
 					return true;
 				}
 			}
-		}
 
-		debug logger.tracef(" [before complete ] %s", typeof(this).stringof);
-
-		if (visitor.complete)
-		{
-			return true;
-		}
-
-		static if (hasTreePath)
-		{
 			debug logger.tracef(" [ after complete ] pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			debug logger.tracef(" [ after complete ] path: %s path position: %s", visitor.path, visitor.path_position);
-		}
 
-		static if (hasTreePath && Sinking)
-		{
-			if (visitor.state.among(visitor.State.first, visitor.State.rest))
+			if (Sinking && visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
 				// (+) position change (sinking)
 				visitor.position[] += visitor.deferred_change[];
 				visitor.deferred_change[] = 0;
-				debug logger.tracef("[before processLeaf ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
+				debug logger.tracef("[before enterNode ] position (S) pos: %s\tdeferred: %s", visitor.position, visitor.deferred_change);
 			}
-		}
 
-		static if (Sinking)
-			visitor.processLeaf!(order, Data)(data, this);
-
-		static if (hasTreePath && Sinking)
-		{
 			if (visitor.state.among(visitor.State.first, visitor.State.rest))
 			{
-				// (+) deferred_change setup (sinking)
-				visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? visitor.size[Orientation.Vertical] + this.Spacing : this.size;
-				debug logger.tracef("[ finish processLeaf] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
-				debug logger.tracef("[ finish processLeaf] pos: %s dest: %s", visitor.position, visitor.destination);
-				with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
+				static if (Sinking)
 				{
-					state = State.finishing;
-					path = tree_path;
-					path_position = position[visitor.orientation];
-				}
-			}
-		}
+					visitor.processLeaf!(order, Data)(data, this);
 
-		scope(exit)
-		{
-			static if (hasTreePath && Bubbling)
-			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
-				{
-					// (+) position change (bubbling)
-					visitor.position[] += visitor.deferred_change[];
-					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
-					visitor.deferred_change = 0;
-				}
-			}
-
-			static if (Bubbling)
-				visitor.processLeaf!order(data, this);
-
-			static if (hasTreePath && Sinking)
-			{
-				if (visitor.state.among(visitor.State.first, visitor.State.rest))
-				{
-					debug logger.tracef("[   finish leaf   ] deferred (S) dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
-					debug logger.tracef("[   finish leaf   ] pos: %s dest: %s", visitor.position, visitor.destination);
+					// (+) deferred_change setup (sinking)
+					visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? visitor.size[Orientation.Vertical] + this.Spacing : this.size;
+					debug logger.tracef("[ finish processLeaf] deferred (S) dfr: %s\t%s", visitor.deferred_change, visitor.orientation);
+					debug logger.tracef("[ finish processLeaf] pos: %s dest: %s", visitor.position, visitor.destination);
 					with(visitor) if (pos+deferred_change[visitor.orientation] > dest)
 					{
 						state = State.finishing;
@@ -1013,30 +974,56 @@ struct ScalarModel(alias A)
 				}
 			}
 
-			static if (hasTreePath && Bubbling) with(visitor)
+			scope(exit)
 			{
-				if (state.among(State.first, State.rest))
+				if (Bubbling && visitor.state.among(visitor.State.first, visitor.State.rest))
 				{
-					// (+) deferred_change setup (bubbling)
-					const shift = (visitor.orientation == Orientation.Vertical) ? visitor.size[Orientation.Vertical] + this.Spacing: this.size;
-					visitor.deferred_change[visitor.orientation] = -shift;
-					deferred_change[visitor.orientation.nextAxis] = 0;
-					if (pos <= dest)
+					// (+) position change (bubbling)
+					visitor.position[] += visitor.deferred_change[];
+					debug logger.tracef("[leave] pos: %s, deferred: %s", visitor.position, visitor.deferred_change);
+					visitor.deferred_change = 0;
+				}
+
+				static if (Bubbling)
+					visitor.processLeaf!order(data, this);
+
+				if (visitor.state.among(visitor.State.first, visitor.State.rest))
+				{
+					debug logger.tracef("[   finish leaf   ] deferred dfr: %s model: %s visitor: %s", visitor.deferred_change, orientation, visitor.orientation);
+					debug logger.tracef("[   finish leaf   ] pos: %s dest: %s", visitor.position, visitor.destination);
+
+					static if (Bubbling)
 					{
+						// (+) deferred_change setup (bubbling)
+						visitor.deferred_change[visitor.orientation] = (visitor.orientation == Orientation.Vertical) ? -header_size : -this.size;
+						visitor.deferred_change[visitor.orientation.nextAxis] = 0;
+					}
+
+					with(visitor) if (
+						(Sinking  && pos+deferred_change[visitor.orientation]  > dest) ||
+						(Bubbling && pos                                      <= dest)
+					) {
 						state = State.finishing;
 						path = tree_path;
 						path_position = position[visitor.orientation];
 					}
 				}
-			}
 
-			static if (hasTreePath)
-			{
 				debug logger.tracef(" [   after leaf   ] pos: %s deferred: %s", visitor.position, visitor.deferred_change);
 				debug logger.tracef(" [   after leaf   ] path: %s path position: %s", visitor.path, visitor.path_position);
-			}
 
-			debug logger.tracef(" [   after leaf   ] %s", typeof(this).stringof);
+				debug logger.tracef(" [   after leaf   ] %s", typeof(this).stringof);
+			}
+		}
+		else
+		{
+			static if (Sinking)
+				visitor.processLeaf!order(data, this);
+			scope(exit)
+			{
+				static if (Bubbling)
+					visitor.processLeaf!order(data, this);
+			}
 		}
 
 		return false;
