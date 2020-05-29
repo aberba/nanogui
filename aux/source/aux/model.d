@@ -1146,13 +1146,8 @@ mixin template visitImpl()
 					}
 				}
 			}
-		}
-		else
-			visitor.enterNode!(order, Data)(data, this);
 
-		scope(exit)
-		{
-			static if (hasTreePath)
+			scope(exit)
 			{
 				static if (Bubbling)
 				{
@@ -1216,16 +1211,20 @@ mixin template visitImpl()
 
 				debug logger.tracef(" [after leaveNode ] pos: %s deferred: %s", visitor.position, visitor.deferred_change);
 				debug logger.tracef(" [after leaveNode ] path: %s path position: %s", visitor.path, visitor.path_position);
+
+				debug logger.tracef(" [after leaveNode ] %s", typeof(this).stringof);
 			}
-			else
+		}
+		else
+		{
+			visitor.enterNode!(order, Data)(data, this);
+			scope(exit)
 			{
 				visitor.leaveNode!order(data, this);
 
 				// restore parent orientation
 				visitor.orientation = old_orientation;
 			}
-
-			debug logger.tracef(" [after leaveNode ] %s", typeof(this).stringof);
 		}
 
 		if (!this.collapsed)
